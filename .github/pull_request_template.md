@@ -1,4 +1,3 @@
-
 ## What does this pull request do?
 *What is being changed?*
 
@@ -29,6 +28,6 @@ After:
 - [ ] Does the code compile into binary?
 - [ ] Does the code run?
 - [ ] Does the feature have a test?
-- [ ] Does all test pass
+- [ ] Do all tests pass
 - [ ] Does the code follow our code conventions, use the linter?
-- [ ] Has the OpenAi spec been updated?
+- [ ] Has the OpenAPI spec been updated?
