@@ -1,0 +1,2 @@
+# Tools
+* [Markdown Tables Generator](https://www.tablesgenerator.com/markdown_tables) lets you create and edit markdown tables in your browser. Tables are shown in a nice UI instead of the nightmarish markdown as seen in `folder-structure.md` in this folder.
