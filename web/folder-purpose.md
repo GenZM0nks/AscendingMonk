@@ -1,0 +1,1 @@
+Static rescourses like templates
