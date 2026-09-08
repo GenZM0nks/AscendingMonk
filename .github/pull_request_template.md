@@ -26,7 +26,7 @@ After:
 ---
 
 ## Checklist before merging
-- [ ] Does the code compile into a binary?
+- [ ] Does the code compile into binary?
 - [ ] Does the code run?
 - [ ] Does the feature have a test?
 - [ ] Does all test pass
