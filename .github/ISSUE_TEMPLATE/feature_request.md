@@ -1,20 +1,12 @@
----
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
+# General process: 
+- Write a description og the code as a list
+- like this
 
----
+(If relevant copy original code or image of original UI)
+Original source code: 
+```python
+print("hello")
+```
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
-
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
-
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
-
-**Additional context**
-Add any other context or screenshots about the feature request here.
+# Documentation:
+- write what documentation is required or valuable (like swagger scpecs or a decision in choices)
