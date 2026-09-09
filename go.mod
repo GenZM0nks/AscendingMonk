@@ -1,3 +1,5 @@
 module github.com/GenZM0nks/AscendingMonk
 
-go 1.27.1
+go 1.26
+
+require github.com/mattn/go-sqlite3 v1.14.52

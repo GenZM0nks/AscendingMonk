@@ -1,0 +1,31 @@
+basePath: /api
+host: localhost:8080
+info:
+  contact:
+    email: apisupport@genzmonks.com
+    name: API Support
+    url: https://github.com/GenZM0nks/AscendingMonk
+  description: This is a Go rewrite of whoknows.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: AscendingMonkAPI
+  version: "1.0"
+paths:
+  /about:
+    get:
+      description: Render the about template to show in the browser.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Show about.html
+      tags:
+      - Pages
+swagger: "2.0"
