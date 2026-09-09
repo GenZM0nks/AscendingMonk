@@ -9,7 +9,7 @@ import (
 func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	pageData := PageData{
 		PageTitle: "Login",
-		Flashes:   []string{"Hello"},
+		Flashes:   nil,
 	}
 
 	templates.LoadAndExecuteTemplate("web/templates/login.html", pageData, responseWriter)
