@@ -6,7 +6,7 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
-// AboutHandler renders the about template.
+// About renders the about page using the shared layout template
 //
 // @Summary Show about.html
 // @Description Render the about template to show in the browser.
@@ -15,14 +15,11 @@ import (
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /about [get]
-func AboutHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, _ *http.Request) {
-		pageData := PageData{
-			PageTitle: "About",
-			// User:      *User,
-			Flashes: nil,
-		}
-
-		templates.LoadAndExecuteTemplate("static/html/about.html", pageData, w)
+func About(responseWriter http.ResponseWriter, _ *http.Request) {
+	pageData := PageData{
+		PageTitle: "About",
+		Flashes:   nil,
 	}
+
+	templates.LoadAndExecuteTemplate("web/templates/about.html", pageData, responseWriter)
 }

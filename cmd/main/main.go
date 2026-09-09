@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -25,6 +24,8 @@ import (
 // @host      localhost:8080
 // @BasePath  /api
 func main() {
+	router := http.NewServeMux()
+
 	err := database.Connect()
 
 	if err != nil {
@@ -39,11 +40,15 @@ func main() {
 		addr = ":8080"
 	}
 
-	files := http.FileServer(http.Dir("./static")) // Request for css won't be filled without this.
-	http.Handle("/", files)
+	router.HandleFunc("GET /about", handlers.About)
 
-	http.Handle("GET /about", handlers.AboutHandler())
+	staticFiles := http.FileServer(http.Dir("web/static"))
+	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))
 
-	fmt.Printf("Starting server on localhost%s\n", addr)
-	http.ListenAndServe(":8080", nil) // nil => DefaultServeMux for routing, request handling.
+	log.Printf("Server listening on http://localhost:%s\n", addr)
+
+	serverError := http.ListenAndServe(addr, router)
+	if serverError != nil {
+		log.Fatal(serverError)
+	}
 }

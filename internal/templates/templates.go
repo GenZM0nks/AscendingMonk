@@ -9,7 +9,7 @@ import (
 // LoadAndExecuteTemplate reads a template file, executes it and writes its HTML to the ResponseWriter
 // so the user may see the rendered template in their browser.
 func LoadAndExecuteTemplate(pathToTemplate string, templateData any, writer http.ResponseWriter) error {
-	template, err := template.ParseFiles("static/html/layout.html", pathToTemplate)
+	template, err := template.ParseFiles("web/templates/layout.html", pathToTemplate)
 
 	if err != nil {
 		http.Error(writer, fmt.Sprintf("Unable to load template: %s\nError: %s", pathToTemplate, err.Error()), http.StatusInternalServerError)
