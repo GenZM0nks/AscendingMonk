@@ -1,0 +1,45 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a Go rewrite of whoknows.",
+        "title": "AscendingMonkAPI",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "https://github.com/GenZM0nks/AscendingMonk",
+            "email": "apisupport@genzmonks.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/about": {
+            "get": {
+                "description": "Render the about template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show about.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

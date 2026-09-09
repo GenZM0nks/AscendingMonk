@@ -1,31 +1,25 @@
 package handlers
 
 import (
-	"html/template"
-	"log"
 	"net/http"
+
+	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
 // About renders the about page using the shared layout template
-func About(responseWriter http.ResponseWriter, request *http.Request) {
-	pageTemplates, templateError := template.ParseFiles(
-		"web/templates/layout.html",
-		"web/templates/about.html",
-	)
-	if templateError != nil {
-		log.Println(templateError)
-		http.Error(
-			responseWriter,
-			"Unable to load the about page",
-			http.StatusInternalServerError,
-		)
-		return
+//
+// @Summary Show about.html
+// @Description Render the about template to show in the browser.
+// @Produce html
+// @Success 200
+// @Failure 500 {string} string "error"
+// @Tags Pages
+// @Router /about [get]
+func About(responseWriter http.ResponseWriter, _ *http.Request) {
+	pageData := PageData{
+		PageTitle: "About",
+		Flashes:   nil,
 	}
 
-	responseWriter.Header().Set("Content-Type", "text/html; charset=utf-8")
-
-	renderError := pageTemplates.ExecuteTemplate(responseWriter, "layout", nil)
-	if renderError != nil {
-		log.Println(renderError)
-	}
+	templates.LoadAndExecuteTemplate("web/templates/about.html", pageData, responseWriter)
 }
