@@ -12,8 +12,10 @@ import (
 // TestLoginPage checks that the login handler renders the expected HTML page
 // by looking for parts of it, like 'Log In'
 func TestLoginPage(test *testing.T) {
+	// Below is setup and teardown for htis test
 	test.Chdir("..")
-	defer test.Chdir("..")
+	defer test.Chdir("./test")
+
 	request := httptest.NewRequest(http.MethodGet, "/login", nil)
 	responseRecorder := httptest.NewRecorder()
 

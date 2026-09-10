@@ -12,9 +12,9 @@ import (
 // TestAbout checks that the about handler renders the expected HTML page
 // by looking for parts of it, like 'Our mission' and the image
 func TestAbout(test *testing.T) {
-
+	// Below is setup and teardown for htis test
 	test.Chdir("..")
-	defer test.Chdir("..")
+	defer test.Chdir("./test")
 
 	request := httptest.NewRequest(http.MethodGet, "/about", nil)
 	responseRecorder := httptest.NewRecorder()
