@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
@@ -42,10 +43,20 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 	fmt.Println(formUsername + " " + formPassword)
 
+	sqlRowPointer := database.QueryRow("SELECT 1 FROM users WHERE username = ?", formUsername)
+	foundUser := &User{}
+	//err := sqlRowPointer.Scan(foundUser, sqlRowPointer)
+	err := sqlRowPointer.Scan(&foundUser.id, &foundUser.username, &foundUser.email, &foundUser.password)
+	if err != nil {
+		http.Error(responseWriter, fmt.Sprintf("The provided username (%s) or password not recognized", formUsername), http.StatusNotFound)
+	}
+
 }
 
 // This struct with keep user data
 type User struct {
+	id       uint64
 	username string
+	email    string
 	password string
 }
