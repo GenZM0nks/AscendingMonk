@@ -79,7 +79,7 @@ func RegisterAPI(responseWriter http.ResponseWriter, request *http.Request) {
 		})
 	}
 
-	if password2 != "" && password != password2 {
+	if password != password2 {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "password2"},
 			Message:  "Passwords do not match",
