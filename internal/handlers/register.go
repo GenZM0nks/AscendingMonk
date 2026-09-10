@@ -15,7 +15,7 @@ import (
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /register [get]
-func Register(responseWriter http.ResponseWriter, requestPointer *http.Request) {
+func Register(responseWriter http.ResponseWriter, _ *http.Request) {
 	pageData := PageData{
 		PageTitle: "Register",
 		Flashes:   nil,
