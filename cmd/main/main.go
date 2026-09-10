@@ -41,7 +41,8 @@ func main() {
 	}
 
 	router.HandleFunc("GET /about", handlers.About)
-	router.HandleFunc("GET /login", handlers.Login)
+	router.HandleFunc("GET /login", handlers.ServeLoginPage)
+	router.HandleFunc("POST /api/login", handlers.Login)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))
