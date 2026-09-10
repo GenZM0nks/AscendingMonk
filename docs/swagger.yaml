@@ -1,4 +1,29 @@
 basePath: /api
+definitions:
+  handlers.AuthResponse:
+    properties:
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
+  handlers.HTTPValidationError:
+    properties:
+      detail:
+        items:
+          $ref: '#/definitions/handlers.ValidationError'
+        type: array
+    type: object
+  handlers.ValidationError:
+    properties:
+      loc:
+        items: {}
+        type: array
+      msg:
+        type: string
+      type:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -43,4 +68,43 @@ paths:
       summary: Show login.html
       tags:
       - Pages
+  /register:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Register a new user account
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Password confirmation
+        in: formData
+        name: password2
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.HTTPValidationError'
+      summary: Register a new user
+      tags:
+      - API
 swagger: "2.0"
