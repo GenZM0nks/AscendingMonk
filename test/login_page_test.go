@@ -9,23 +9,22 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/handlers"
 )
 
-// TestAbout checks that the about handler renders the expected HTML page
-// by looking for parts of it, like 'Our mission' and the image
-func TestAbout(test *testing.T) {
-
+// TestLoginPage checks that the login handler renders the expected HTML page
+// by looking for parts of it, like 'Log In'
+func TestLoginPage(test *testing.T) {
 	test.Chdir("..")
 	defer test.Chdir("..")
-
-	request := httptest.NewRequest(http.MethodGet, "/about", nil)
+	request := httptest.NewRequest(http.MethodGet, "/login", nil)
 	responseRecorder := httptest.NewRecorder()
 
-	handlers.About(responseRecorder, request)
+	handlers.Login(responseRecorder, request)
 
 	if responseRecorder.Code != http.StatusOK {
 		test.Fatalf(
-			"expected status %d, got %d",
+			"expected status %d, got %d\nBody: %s",
 			http.StatusOK,
 			responseRecorder.Code,
+			responseRecorder.Body.String(),
 		)
 	}
 
@@ -36,11 +35,8 @@ func TestAbout(test *testing.T) {
 
 	responseBody := responseRecorder.Body.String()
 
-	if !strings.Contains(responseBody, "Our mission") {
-		test.Error("expected the page to contain the mission heading")
+	if !strings.Contains(responseBody, "Log In") {
+		test.Error("expected the page to contain the Log In heading")
 	}
 
-	if !strings.Contains(responseBody, `src="/static/monkgroup.png"`) {
-		test.Error("expected the page to reference the team image")
-	}
 }
