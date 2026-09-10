@@ -14,15 +14,17 @@ var database *sql.DB // Remove this global and refactor if / when we build a ser
 // On failure, print errors with details.
 // This method expects the environment variable `DB_PATH` to be set at runtime in a .env file.
 func Connect() error {
-	database, err := sql.Open("sqlite3", os.Getenv("DB_PATH"))
+	var databaseError error
 
-	if err != nil {
-		return fmt.Errorf("Failed to open database: %w", err)
+	database, databaseError = sql.Open("sqlite3", os.Getenv("DB_PATH"))
+
+	if databaseError != nil {
+		return fmt.Errorf("Failed to open database: %w", databaseError)
 	}
 
-	err = database.Ping()
-	if err != nil {
-		return fmt.Errorf("Failed to ping database: %w", err)
+	databaseError = database.Ping()
+	if databaseError != nil {
+		return fmt.Errorf("Failed to ping database: %w", databaseError)
 	}
 
 	return nil
