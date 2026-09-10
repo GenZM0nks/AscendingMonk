@@ -46,6 +46,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/login": {
+            "get": {
+                "description": "Render the Login template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show login.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     }
 }`

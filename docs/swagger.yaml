@@ -28,4 +28,19 @@ paths:
       summary: Show about.html
       tags:
       - Pages
+  /login:
+    get:
+      description: Render the Login template to show in the browser.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Show login.html
+      tags:
+      - Pages
 swagger: "2.0"
