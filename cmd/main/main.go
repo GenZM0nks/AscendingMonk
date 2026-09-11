@@ -42,6 +42,7 @@ func main() {
 
 	router.HandleFunc("GET /about", handlers.About)
 	router.HandleFunc("GET /login", handlers.Login)
+	router.HandleFunc("GET /register", handlers.Register)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))
