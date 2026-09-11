@@ -11,4 +11,5 @@ type SearchData struct {
 type SearchResult struct {
 	Title       string
 	Description string
+	URL         string
 }

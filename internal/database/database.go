@@ -13,8 +13,8 @@ var database *sql.DB // Remove this global and refactor if / when we build a ser
 // Connect initializes a database connection and sets `database` equal to its handle on success.
 // On failure, print errors with details.
 // This method expects the environment variable `DB_PATH` to be set at runtime in a .env file.
-func Connect() error {
-	database, err := sql.Open("sqlite3", os.Getenv("DB_PATH"))
+func Connect() (err error) {
+	database, err = sql.Open("sqlite3", os.Getenv("DB_PATH"))
 
 	if err != nil {
 		return fmt.Errorf("Failed to open database: %w", err)
@@ -58,7 +58,7 @@ func QueryRow(query string, args ...any) *sql.Row {
 // without returning any rows
 func Execute(query string, args ...any) (sql.Result, error) {
 	if database == nil {
-		return nil, fmt.Errorf("Database not initialized")
+		return nil, fmt.Errorf("Database not initialized. Call Connect()")
 	}
 
 	return database.Exec(query, args...)
