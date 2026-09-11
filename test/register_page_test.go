@@ -12,7 +12,7 @@ import (
 // TestregisterPage checks that the register handler renders the expected HTML page
 // by looking for parts of it, like 'Sign Up'
 func TestRegisterPage(test *testing.T) {
-	// Below is setup and teardown for htis test
+	// Below is setup and teardown for this test
 	test.Chdir("..")
 	defer test.Chdir("./test")
 
