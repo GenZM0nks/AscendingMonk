@@ -59,7 +59,7 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 // @Success 200
 // @Failure 500 {string} string "error"
 // @Tags Pages
-// @Router /search [post]
+// @Router /search [get]
 func Search(responseWriter http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query().Get("q")
 	language := request.URL.Query().Get("language")

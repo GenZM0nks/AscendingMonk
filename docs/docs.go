@@ -115,6 +115,29 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/search": {
+            "get": {
+                "description": "Render the search template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show search.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     }
 }`
