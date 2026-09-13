@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	_ "github.com/mattn/go-sqlite3" // Empty import since we won't use it directly. The string in sql.Open makes Go runtime select our driver.
 )
@@ -12,9 +11,9 @@ var database *sql.DB // Remove this global and refactor if / when we build a ser
 
 // Connect initializes a database connection and sets `database` equal to its handle on success.
 // On failure, print errors with details.
-// This method expects the environment variable `DB_PATH` to be set at runtime in a .env file.
-func Connect() (err error) {
-	database, err = sql.Open("sqlite3", os.Getenv("DB_PATH"))
+// This method expects the environment variable `DB_PATH` to be set at runtime in a .env file or the shell.
+func Connect(dbPath string) (err error) {
+	database, err = sql.Open("sqlite3", dbPath)
 
 	if err != nil {
 		return fmt.Errorf("Failed to open database: %w", err)
@@ -62,4 +61,9 @@ func Execute(query string, args ...any) (sql.Result, error) {
 	}
 
 	return database.Exec(query, args...)
+}
+
+// SetDatabase sets the database instance in this file to _database.
+func SetDatabase(_database *sql.DB) {
+	database = _database
 }

@@ -26,7 +26,7 @@ import (
 func main() {
 	router := http.NewServeMux()
 
-	err := database.Connect()
+	err := database.Connect(os.Getenv("DB_PATH"))
 
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
