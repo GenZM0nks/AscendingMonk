@@ -93,16 +93,16 @@ const docTemplate = `{
                 }
             }
         },
-        "/search": {
-            "post": {
-                "description": "Render the search template to show in the browser.",
+        "/register": {
+            "get": {
+                "description": "Render the Register template to show in the browser.",
                 "produces": [
                     "text/html"
                 ],
                 "tags": [
                     "Pages"
                 ],
-                "summary": "Show search.html",
+                "summary": "Show register.html",
                 "responses": {
                     "200": {
                         "description": "OK"

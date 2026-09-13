@@ -58,9 +58,9 @@ paths:
       summary: Show login.html
       tags:
       - Pages
-  /search:
-    post:
-      description: Render the search template to show in the browser.
+  /register:
+    get:
+      description: Render the Register template to show in the browser.
       produces:
       - text/html
       responses:
@@ -70,7 +70,7 @@ paths:
           description: error
           schema:
             type: string
-      summary: Show search.html
+      summary: Show register.html
       tags:
       - Pages
 swagger: "2.0"
