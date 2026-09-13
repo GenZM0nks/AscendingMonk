@@ -71,6 +71,27 @@ const docTemplate = `{
             }
         },
         "/register": {
+            "get": {
+                "description": "Render the Register template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show register.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Register a new user account",
                 "consumes": [
