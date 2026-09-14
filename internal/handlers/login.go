@@ -48,7 +48,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	//err := sqlRowPointer.Scan(foundUser, sqlRowPointer)
 	err := sqlRowPointer.Scan(&foundUser.id, &foundUser.username, &foundUser.email, &foundUser.password)
 	if err != nil {
-		http.Error(responseWriter, fmt.Sprintf("The provided username (%s) or password not recognized", formUsername), http.StatusNotFound)
+		http.Error(responseWriter, fmt.Sprintf("The provided username (%s) or password not recognized. | %s |", formUsername, err.Error()), http.StatusNotFound)
 	}
 
 }
