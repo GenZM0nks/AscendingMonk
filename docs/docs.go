@@ -47,6 +47,29 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/search": {
+            "get": {
+                "description": "Fetch query data from the database.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Fetch query data.",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "get": {
                 "description": "Render the Login template to show in the browser.",
@@ -80,6 +103,29 @@ const docTemplate = `{
                     "Pages"
                 ],
                 "summary": "Show register.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/search": {
+            "get": {
+                "description": "Render the search template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show search.html",
                 "responses": {
                     "200": {
                         "description": "OK"
