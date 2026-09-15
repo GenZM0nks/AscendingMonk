@@ -15,7 +15,7 @@ import (
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /login [get]
-func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
+func Login(responseWriter http.ResponseWriter, _ *http.Request) {
 	pageData := PageData{
 		PageTitle: "Login",
 		Flashes:   nil,

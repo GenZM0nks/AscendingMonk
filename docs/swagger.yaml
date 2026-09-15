@@ -53,6 +53,21 @@ paths:
       summary: Show about.html
       tags:
       - Pages
+  /api/search:
+    get:
+      description: Fetch query data from the database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Fetch query data.
+      tags:
+      - Pages
   /login:
     get:
       description: Render the Login template to show in the browser.
@@ -121,4 +136,19 @@ paths:
       summary: Register a new user
       tags:
       - API
+  /search:
+    get:
+      description: Render the search template to show in the browser.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Show search.html
+      tags:
+      - Pages
 swagger: "2.0"
