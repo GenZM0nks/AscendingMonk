@@ -26,7 +26,7 @@ import (
 func main() {
 	router := http.NewServeMux()
 
-	err := database.Connect()
+	err := database.Connect(os.Getenv("DB_PATH"))
 
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -43,6 +43,10 @@ func main() {
 	router.HandleFunc("GET /about", handlers.About)
 	router.HandleFunc("GET /login", handlers.ServeLoginPage)
 	router.HandleFunc("POST /api/login", handlers.Login)
+	router.HandleFunc("POST /api/register", handlers.RegisterAPI)
+	router.HandleFunc("GET /search", handlers.Search)
+	router.HandleFunc("GET /api/search", handlers.APISearch)
+	router.HandleFunc("GET /register", handlers.Register)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))

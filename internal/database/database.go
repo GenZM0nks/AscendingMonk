@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	_ "github.com/mattn/go-sqlite3" // Empty import since we won't use it directly. The string in sql.Open makes Go runtime select our driver.
 )
@@ -12,11 +11,16 @@ var database *sql.DB // Remove this global and refactor if / when we build a ser
 
 // Connect initializes a database connection and sets `database` equal to its handle on success.
 // On failure, print errors with details.
-// This method expects the environment variable `DB_PATH` to be set at runtime in a .env file.
-func Connect() error {
-	var databaseError error
+// This method expects the environment variable `DB_PATH` when starting the app
+// DB_PATH="test-database-name.(sqlite|db)" go run ./cmd/main
+// Fx "test-database-2.db"
+func Connect(dbPath string) (databaseError error) {
 
-	database, databaseError = sql.Open("sqlite3", os.Getenv("DB_PATH"))
+	if dbPath == "" {
+		return fmt.Errorf("DB_PATH is not set")
+	}
+
+	database, databaseError = sql.Open("sqlite3", dbPath)
 
 	if databaseError != nil {
 		return fmt.Errorf("Failed to open database: %w", databaseError)
@@ -24,6 +28,8 @@ func Connect() error {
 
 	databaseError = database.Ping()
 	if databaseError != nil {
+		database.Close()
+		database = nil
 		return fmt.Errorf("Failed to ping database: %w", databaseError)
 	}
 
@@ -60,8 +66,13 @@ func QueryRow(query string, args ...any) *sql.Row {
 // without returning any rows
 func Execute(query string, args ...any) (sql.Result, error) {
 	if database == nil {
-		return nil, fmt.Errorf("Database not initialized")
+		return nil, fmt.Errorf("Database not initialized. Call Connect()")
 	}
 
 	return database.Exec(query, args...)
+}
+
+// SetDatabase sets the database instance in this file to _database.
+func SetDatabase(_database *sql.DB) {
+	database = _database
 }
