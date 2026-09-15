@@ -15,13 +15,16 @@ var database *sql.DB // Remove this global and refactor if / when we build a ser
 func Connect(dbPath string) (err error) {
 	database, err = sql.Open("sqlite3", dbPath)
 
-	if err != nil {
-		return fmt.Errorf("Failed to open database: %w", err)
+
+	database, databaseError = sql.Open("sqlite3", os.Getenv("DB_PATH"))
+
+	if databaseError != nil {
+		return fmt.Errorf("Failed to open database: %w", databaseError)
 	}
 
-	err = database.Ping()
-	if err != nil {
-		return fmt.Errorf("Failed to ping database: %w", err)
+	databaseError = database.Ping()
+	if databaseError != nil {
+		return fmt.Errorf("Failed to ping database: %w", databaseError)
 	}
 
 	return nil
