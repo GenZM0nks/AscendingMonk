@@ -79,16 +79,16 @@ func TestAPISearch(test *testing.T) {
 		nil,
 	)
 
-	response := httptest.NewRecorder()
+	responseRecorder := httptest.NewRecorder()
 
-	handlers.APISearch(response, request)
+	handlers.APISearch(responseRecorder, request)
 
-	if response.Code != http.StatusOK {
-		test.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
+	if responseRecorder.Code != http.StatusOK {
+		test.Fatalf("expected status %d, got %d", http.StatusOK, responseRecorder.Code)
 	}
 
 	var actualResults []handlers.SearchResult
-	if err := json.Unmarshal(response.Body.Bytes(), &actualResults); err != nil {
+	if err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResults); err != nil {
 		test.Fatalf("response was not valid JSON: %v", err)
 	}
 
