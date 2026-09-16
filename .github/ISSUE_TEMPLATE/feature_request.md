@@ -1,3 +1,11 @@
+---
+name: Feature request
+about: Suggest a new feature or improvement
+title: ''
+labels: ''
+assignees: ''
+---
+
 # General process: 
 - Write a description og the code as a list
 - like this
@@ -9,4 +17,4 @@ print("hello")
 ```
 
 # Documentation:
-- write what documentation is required or valuable (like swagger scpecs or a decision in choices)
+- write what documentation is required or valuable (like swagger specs or a decision in choices)
