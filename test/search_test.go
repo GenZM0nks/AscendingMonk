@@ -18,7 +18,7 @@ func TestSearchPage(test *testing.T) {
 	test.Chdir("..")
 	defer test.Chdir("./test")
 
-	request := httptest.NewRequest(http.MethodGet, "/search", nil)
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	responseRecorder := httptest.NewRecorder()
 
 	handlers.Search(responseRecorder, request)
