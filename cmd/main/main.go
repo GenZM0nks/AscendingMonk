@@ -42,7 +42,8 @@ func main() {
 
 	router.HandleFunc("GET /about", handlers.About)
 	router.HandleFunc("GET /login", handlers.ServeLoginPage)
-	router.HandleFunc("POST /api/login", handlers.Login)
+	router.HandleFunc("POST /login", handlers.Login)
+	//router.HandleFunc("POST /api/login", handlers.Login)
 	router.HandleFunc("POST /api/register", handlers.RegisterAPI)
 	router.HandleFunc("GET /", handlers.Search)
 	router.HandleFunc("GET /api/search", handlers.APISearch)
