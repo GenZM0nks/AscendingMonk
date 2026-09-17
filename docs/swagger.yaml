@@ -38,6 +38,21 @@ info:
   title: AscendingMonkAPI
   version: "1.0"
 paths:
+  /:
+    get:
+      description: Render the search template to show in the browser.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Show search.html
+      tags:
+      - Pages
   /about:
     get:
       description: Render the about template to show in the browser.
@@ -136,19 +151,4 @@ paths:
       summary: Register a new user
       tags:
       - API
-  /search:
-    get:
-      description: Render the search template to show in the browser.
-      produces:
-      - text/html
-      responses:
-        "200":
-          description: OK
-        "500":
-          description: error
-          schema:
-            type: string
-      summary: Show search.html
-      tags:
-      - Pages
 swagger: "2.0"
