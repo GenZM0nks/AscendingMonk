@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"database/sql"
-	"fmt"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
@@ -100,8 +101,6 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	validationErrors := []ValidationError{}
 
-	fmt.Println(loginRequest.Username + " " + loginRequest.Password)
-
 	if loginRequest.Username == "" {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username"},
@@ -122,16 +121,31 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 		return validationErrors, nil
 	}
 
-	fmt.Println("Passed missing field check")
-
-	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ? AND password = ?", loginRequest.Username, loginRequest.Password) //for testing b69f71a0ab8bec2aa3055dc8745cce81
+	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username) //for testing b69f71a0ab8bec2aa3055dc8745cce81
 	foundUser := &LoginData{}
 	loginError := sqlRowPointer.Scan(&foundUser.Username, &foundUser.Password)
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, loginError
 	}
-
 	if loginError == sql.ErrNoRows {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username and password"},
+			Message:  "No user with the provided details exists",
+			Type:     "value_error",
+		})
+	}
+
+	if len(validationErrors) > 0 {
+		return validationErrors, nil
+	}
+
+	hashError := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(loginRequest.Password))
+
+	if (hashError != nil) && hashError != bcrypt.ErrMismatchedHashAndPassword {
+		return nil, hashError
+	}
+
+	if hashError == bcrypt.ErrMismatchedHashAndPassword {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
