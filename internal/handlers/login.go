@@ -105,7 +105,7 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	if loginRequest.Username == "" {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username"},
-			Message:  "Field required",
+			Message:  "Username Field required",
 			Type:     "missing",
 		})
 	}
@@ -113,7 +113,7 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	if loginRequest.Password == "" {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "password"},
-			Message:  "Field required",
+			Message:  "Password Field required",
 			Type:     "missing",
 		})
 	}
@@ -124,11 +124,23 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 
 	fmt.Println("Passed missing field check")
 
-	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username)
+	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ? AND password = ?", loginRequest.Username, loginRequest.Password) //for testing b69f71a0ab8bec2aa3055dc8745cce81
 	foundUser := &LoginData{}
-	loginError := sqlRowPointer.Scan(&foundUser, &foundUser.Username, &foundUser.Password)
-	if loginError != nil || loginError == sql.ErrNoRows {
+	loginError := sqlRowPointer.Scan(&foundUser.Username, &foundUser.Password)
+	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, loginError
+	}
+
+	if loginError == sql.ErrNoRows {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username and password"},
+			Message:  "No user with the provided details exists",
+			Type:     "value_error",
+		})
+	}
+
+	if len(validationErrors) > 0 {
+		return validationErrors, nil
 	}
 
 	return nil, nil

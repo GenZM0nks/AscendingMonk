@@ -4,11 +4,13 @@
   <h2>Log In</h2>
 
   {{ if .Errors }}
-  <ul>
-    {{ range .Errors}}
-    <li>{{ .message }}</li>
-    {{ end }}
-  </ul>
+  <div class="error">
+    <ul>
+      {{ range .Errors}}
+      <li>{{ .Message }}</li>
+      {{ end }}
+    </ul>
+  </div>
   {{ end }}
 
   <form action="/login" method="POST">
