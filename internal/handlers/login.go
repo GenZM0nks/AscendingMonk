@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -18,9 +19,13 @@ import (
 // @Tags Pages
 // @Router /login [get]
 func ServeLoginPage(responseWriter http.ResponseWriter, _ *http.Request) {
-	pageData := PageData{
-		PageTitle: "Login",
-		Flashes:   nil,
+	pageData := LoginResponse{
+		PageData: PageData{
+			PageTitle: "Login",
+			Flashes:   nil,
+		},
+		Errors:   nil,
+		Username: "",
 	}
 
 	templates.LoadAndExecuteTemplate("web/templates/login.html", pageData, responseWriter)
@@ -48,25 +53,102 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		return
 	}
 
-	formUsername := requestPointer.Form["username"][0]
-	formPassword := requestPointer.Form["password"][0]
-
-	fmt.Println(formUsername + " " + formPassword)
-
-	sqlRowPointer := database.QueryRow("SELECT 1 FROM users WHERE username = ?", formUsername)
-	foundUser := &User{}
-	//err := sqlRowPointer.Scan(foundUser, sqlRowPointer)
-	err := sqlRowPointer.Scan(&foundUser.id, &foundUser.username, &foundUser.email, &foundUser.password)
-	if err != nil {
-		http.Error(responseWriter, fmt.Sprintf("The provided username (%s) or password not recognized. | %s |", formUsername, err.Error()), http.StatusNotFound)
+	loginRequest := LoginData{
+		Username: requestPointer.Form["username"][0],
+		Password: requestPointer.Form["password"][0],
 	}
 
+	validationErrors, loginError := loginUser(loginRequest)
+
+	if loginError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to login user",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	if len(validationErrors) > 0 {
+		loginResponse := LoginResponse{
+			PageData: PageData{
+				PageTitle: "Login",
+				Flashes:   nil,
+			},
+			Errors:   validationErrors,
+			Username: loginRequest.Username,
+		}
+
+		templates.LoadAndExecuteTemplate(
+			"web/templates/login.html",
+			loginResponse,
+			responseWriter,
+		)
+
+		return
+	}
+
+	http.Redirect(
+		responseWriter,
+		requestPointer,
+		"/",
+		http.StatusSeeOther,
+	)
+
+}
+
+func loginUser(loginRequest LoginData) ([]ValidationError, error) {
+	validationErrors := []ValidationError{}
+
+	fmt.Println(loginRequest.Username + " " + loginRequest.Password)
+
+	if loginRequest.Username == "" {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username"},
+			Message:  "Field required",
+			Type:     "missing",
+		})
+	}
+
+	if loginRequest.Password == "" {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "password"},
+			Message:  "Field required",
+			Type:     "missing",
+		})
+	}
+
+	if len(validationErrors) > 0 {
+		return validationErrors, nil
+	}
+
+	fmt.Println("Passed missing field check")
+
+	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username)
+	foundUser := &LoginData{}
+	loginError := sqlRowPointer.Scan(&foundUser, &foundUser.Username, &foundUser.Password)
+	if loginError != nil || loginError == sql.ErrNoRows {
+		return nil, loginError
+	}
+
+	return nil, nil
 }
 
 // This struct with keep user data
 type User struct {
-	id       uint64
-	username string
-	email    string
-	password string
+	Id       uint64
+	Username string
+	Email    string
+	Password string
+}
+
+type LoginData struct {
+	Username string
+	Password string
+}
+
+type LoginResponse struct {
+	PageData
+	Errors   []ValidationError
+	Username string
 }
