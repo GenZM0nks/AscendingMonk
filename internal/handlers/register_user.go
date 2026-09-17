@@ -45,8 +45,8 @@ func registerUser(
 		})
 	}
 
-	// Check that the two supplied passwords match
-	if password != password2 {
+	// Validate password confirmation when provided
+	if password2 != "" && password != password2 {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "password2"},
 			Message:  "Passwords do not match",
