@@ -37,7 +37,17 @@ func ServeLoginPage(responseWriter http.ResponseWriter, _ *http.Request) {
 // @Tags queries
 // @Router /login [post]
 func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
-	requestPointer.ParseForm()
+	requestError := requestPointer.ParseForm()
+
+	if requestError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to parse form",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
 	formUsername := requestPointer.Form["username"][0]
 	formPassword := requestPointer.Form["password"][0]
 
