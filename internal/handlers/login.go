@@ -172,7 +172,7 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 // @Success 200 {object} AuthResponse
 // @Failure 422 {object} HTTPValidationError
 // @Tags API
-// @Router api/login [post]
+// @Router /api/login [post]
 func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	requestError := request.ParseForm()
 
