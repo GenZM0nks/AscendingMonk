@@ -98,6 +98,21 @@ paths:
       summary: Show login.html
       tags:
       - Pages
+    post:
+      description: Accepts a username and password, and compares them to the sqlite
+        database.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "422":
+          description: error
+          schema:
+            type: string
+      summary: Show login.html
+      tags:
+      - queries
   /register:
     get:
       description: Render the Register template to show in the browser.

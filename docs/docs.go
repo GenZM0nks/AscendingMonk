@@ -114,6 +114,27 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "description": "Accepts a username and password, and compares them to the sqlite database.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "queries"
+                ],
+                "summary": "Show login.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "422": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/register": {
