@@ -160,19 +160,15 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	return nil, nil
 }
 
-// This struct with keep user data
-type User struct {
-	Id       uint64
-	Username string
-	Email    string
-	Password string
-}
-
+// LoginData stores request and query result data relevant to login in
+// Allows us pass login data together as one entity
 type LoginData struct {
 	Username string
 	Password string
 }
 
+// LoginResponse stores data that need to be sent back to the clients browser.
+// Allows us send error messages to be displayed and for the username to be automatically set in the form, so the user does not need to repeat the form.
 type LoginResponse struct {
 	PageData
 	Errors   []ValidationError
