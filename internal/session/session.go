@@ -3,6 +3,8 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
+
+	"net/http"
 )
 
 func GenerateToken() (string, error) {
@@ -12,4 +14,10 @@ func GenerateToken() (string, error) {
 		return "", internalError
 	}
 	return base64.URLEncoding.EncodeToString(token), nil
+}
+
+var AuthError error
+
+func Authorrize(request *http.Request) error {
+	return nil
 }

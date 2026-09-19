@@ -161,6 +161,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		Value:    sessionToken,
 		Expires:  time.Now().Add(2 * time.Minute),
 		HttpOnly: true,
+		Path:     "/", //Should ensure that the session token is sent for all endpoints
 	})
 
 	http.SetCookie(responseWriter, &http.Cookie{
@@ -239,6 +240,24 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	}
 
 	return foundUser, nil, nil
+}
+
+// The method below is only for testing that sessions are set up correctly
+func Protected(w http.ResponseWriter, r *http.Request) {
+	if err := session.Authorrize(r); err != nil {
+		http.Error(
+			w,
+			"You do not have acces",
+			http.StatusForbidden,
+		)
+		return
+	}
+
+	http.Error(
+		w,
+		"secrets, secrets, secrets",
+		http.StatusOK,
+	)
 }
 
 // LoginRequest stores request data
