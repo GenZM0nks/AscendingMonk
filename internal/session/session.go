@@ -19,5 +19,8 @@ func GenerateToken() (string, error) {
 var AuthError error
 
 func Authorrize(request *http.Request) error {
-	return nil
+	sessionToken, tokenError := request.("session_token");
+	if tokenError != nill || sessionToken.Value == ""{
+		return AuthError
+	}
 }
