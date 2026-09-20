@@ -122,7 +122,7 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 		return validationErrors, nil
 	}
 
-	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username) //for testing b69f71a0ab8bec2aa3055dc8745cce81
+	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username)
 	foundUser := &LoginData{}
 	loginError := sqlRowPointer.Scan(&foundUser.Username, &foundUser.Password)
 	if loginError != nil && loginError != sql.ErrNoRows {
