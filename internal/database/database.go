@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	
 
 	_ "github.com/mattn/go-sqlite3" // Empty import since we won't use it directly. The string in sql.Open makes Go runtime select our driver.
 )

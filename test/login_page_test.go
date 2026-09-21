@@ -18,8 +18,7 @@ func TestLoginPage(test *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/login", nil)
 	responseRecorder := httptest.NewRecorder()
-
-	handlers.Login(responseRecorder, request)
+	handlers.ServeLoginPage(responseRecorder, request)
 
 	if responseRecorder.Code != http.StatusOK {
 		test.Fatalf(
