@@ -36,24 +36,21 @@ func Authorrize(request *http.Request) error {
 	fmt.Println("Does have cookie")
 	//Get session data
 	sessionSqlRow := database.QueryRow("SELECT * FROM session_tokens WHERE session_value = ?", sessionToken.Value)
-	var id uint64
-	var session_value string
-	var csrf_value string
-	var created_at time.Time
-	missingSessionError := sessionSqlRow.Scan(&session_value, &csrf_value, &created_at, &id)
+	var session sessionData
+	missingSessionError := sessionSqlRow.Scan(&session.session_value, &session.csrf_value, &session.created_at, &session.id)
 	if missingSessionError != nil {
 		fmt.Println("no session cookie found")
 		fmt.Println(missingSessionError)
 		return missingSessionError
 	}
-	fmt.Println(id)
-	fmt.Println(session_value)
-	fmt.Println(csrf_value)
-	fmt.Println(created_at)
+	fmt.Println(session.id)
+	fmt.Println(session.session_value)
+	fmt.Println(session.csrf_value)
+	fmt.Println(session.created_at)
 	//Check if session is expired
-	fmt.Println(time.Now().String() + " is after " + created_at.Add(2*time.Minute).String())
-	if time.Now().After(created_at.Add(1 * time.Minute)) {
-		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session_value)
+	fmt.Println(time.Now().String() + " is after " + session.created_at.Add(2*time.Minute).String())
+	if time.Now().After(session.created_at.Add(2 * time.Minute)) {
+		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session.session_value)
 		if databaseError != nil {
 			return databaseError
 		} else {
@@ -62,17 +59,24 @@ func Authorrize(request *http.Request) error {
 	}
 
 	//Get user data
-	userSqlRow := database.QueryRow("SELECT username, password FROM users WHERE id = ?", id)
+	userSqlRow := database.QueryRow("SELECT username, password FROM users WHERE id = ?", session.id)
 	var foundUsername string
 	var foundPassword string
 	missingUserError := userSqlRow.Scan(&foundUsername, &foundPassword)
 	if missingUserError != nil {
 		return missingUserError
 	}
-	fmt.Println(id)
+	fmt.Println(session.id)
 	fmt.Println(foundUsername)
 	fmt.Println(foundPassword)
 
 	return nil
 
+}
+
+type sessionData struct {
+	id            uint64
+	session_value string
+	csrf_value    string
+	created_at    time.Time
 }
