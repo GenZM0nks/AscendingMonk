@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
 const (
@@ -128,4 +131,131 @@ func APIWeather(responseWriter http.ResponseWriter, _ *http.Request) {
 			http.StatusInternalServerError,
 		)
 	}
+}
+
+func formatWeatherDate(date string) string {
+	parsedDate, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		return date
+	}
+
+	return parsedDate.Format("Monday, 2 January")
+}
+
+func weatherDescription(code int) string {
+	switch code {
+	case 0:
+		return "Clear sky"
+	case 1:
+		return "Mainly clear"
+	case 2:
+		return "Partly cloudy"
+	case 3:
+		return "Overcast"
+	case 45:
+		return "Fog"
+	case 48:
+		return "Depositing rime fog"
+	case 51:
+		return "Light drizzle"
+	case 53:
+		return "Moderate drizzle"
+	case 55:
+		return "Dense drizzle"
+	case 56:
+		return "Light freezing drizzle"
+	case 57:
+		return "Dense freezing drizzle"
+	case 61:
+		return "Slight rain"
+	case 63:
+		return "Moderate rain"
+	case 65:
+		return "Heavy rain"
+	case 66:
+		return "Light freezing rain"
+	case 67:
+		return "Heavy freezing rain"
+	case 71:
+		return "Slight snowfall"
+	case 73:
+		return "Moderate snowfall"
+	case 75:
+		return "Heavy snowfall"
+	case 77:
+		return "Snow grains"
+	case 80:
+		return "Slight rain showers"
+	case 81:
+		return "Moderate rain showers"
+	case 82:
+		return "Violent rain showers"
+	case 85:
+		return "Slight snow showers"
+	case 86:
+		return "Heavy snow showers"
+	case 95:
+		return "Thunderstorm"
+	case 96:
+		return "Thunderstorm with slight hail"
+	case 99:
+		return "Thunderstorm with heavy hail"
+	default:
+		return "Unknown"
+	}
+}
+
+func windDirection(degrees int) string {
+	directions := []string{
+		"N", "NNE", "NE", "ENE",
+		"E", "ESE", "SE", "SSE",
+		"S", "SSW", "SW", "WSW",
+		"W", "WNW", "NW", "NNW",
+	}
+
+	index := ((degrees + 11) / 22) % len(directions)
+
+	return directions[index]
+}
+
+// Weather renders the weather forecast page.
+func Weather(responseWriter http.ResponseWriter, _ *http.Request) {
+	weatherData, err := fetchWeatherData()
+	if err != nil {
+		http.Error(
+			responseWriter,
+			"Failed to fetch weather forecast",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	days := make([]WeatherDayView, 0, len(weatherData.Days))
+
+	for _, day := range weatherData.Days {
+		days = append(days, WeatherDayView{
+			Date:                     formatWeatherDate(day.Date),
+			TemperatureMaximum:       day.TemperatureMaximum,
+			TemperatureMinimum:       day.TemperatureMinimum,
+			PrecipitationProbability: day.PrecipitationProbability,
+			WindSpeedMaximum:         day.WindSpeedMaximum,
+			WindDirection:            windDirection(day.WindDirectionDominant),
+			WeatherDescription:       weatherDescription(day.WeatherCode),
+		})
+	}
+
+	pageData := WeatherPageData{
+		Data: PageData{
+			PageTitle: "Weather",
+			Flashes:   nil,
+		},
+		Location: weatherData.Location,
+		Days:     days,
+	}
+
+	templates.LoadAndExecuteTemplate(
+		"web/templates/weather.html",
+		pageData,
+		responseWriter,
+	)
 }

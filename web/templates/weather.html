@@ -1,0 +1,48 @@
+{{ define "title" }}
+{{ .Data.PageTitle }}
+{{ end }}
+
+{{ define "body" }}
+<h1>Weather forecast</h1>
+<h2>{{ .Location }}</h2>
+
+<div class="weather-forecast">
+    {{ range .Days }}
+    <article class="weather-day">
+        <div class="weather-day-summary">
+            <h3>{{ .Date }}</h3>
+            <p>{{ .WeatherDescription }}</p>
+        </div>
+
+        <div class="weather-day-details">
+            <p>
+                <strong>Temperature:</strong><br>
+                {{ .TemperatureMinimum }} &deg;C &ndash; {{ .TemperatureMaximum }} &deg;C
+            </p>
+
+            <p>
+                <strong>Precipitation probability:</strong><br>
+                {{ .PrecipitationProbability }}%
+            </p>
+
+            <p>
+                <strong>Maximum wind speed:</strong><br>
+                {{ .WindSpeedMaximum }} m/s
+            </p>
+
+            <p>
+                <strong>Dominant wind direction:</strong><br>
+                {{ .WindDirection }}
+            </p>
+        </div>
+    </article>
+    {{ end }}
+</div>
+
+<p class="weather-attribution">
+  Weather data by
+  <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">
+    Open-Meteo
+  </a>
+</p>
+{{ end }}

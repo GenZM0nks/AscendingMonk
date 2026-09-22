@@ -87,3 +87,29 @@ button:active {
            line-clamp: 3; 
    -webkit-box-orient: vertical;
 }
+.weather-forecast {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.weather-day {
+  flex: 0 0 250px;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+}
+
+.weather-day h3 {
+  margin-top: 0;
+}
+
+.weather-day-summary {
+  margin-bottom: 2.5rem;
+}
+
+.weather-attribution {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}

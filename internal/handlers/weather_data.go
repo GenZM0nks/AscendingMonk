@@ -21,3 +21,21 @@ type WeatherDay struct {
 	WindDirectionDominant    int     `json:"windDirectionDominant"`
 	WeatherCode              int     `json:"weatherCode"`
 }
+
+// WeatherPageData contains the data needed to render the weather page.
+type WeatherPageData struct {
+	Data     PageData
+	Location string
+	Days     []WeatherDayView
+}
+
+// WeatherDayView contains display-friendly weather data for one day.
+type WeatherDayView struct {
+	Date                     string
+	TemperatureMaximum       float64
+	TemperatureMinimum       float64
+	PrecipitationProbability int
+	WindSpeedMaximum         float64
+	WindDirection            string
+	WeatherDescription       string
+}
