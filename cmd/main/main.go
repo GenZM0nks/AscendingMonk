@@ -47,6 +47,8 @@ func main() {
 	router.HandleFunc("POST /api/register", handlers.RegisterAPI)
 	router.HandleFunc("GET /", handlers.Search)
 	router.HandleFunc("GET /api/search", handlers.APISearch)
+	router.HandleFunc("GET /weather", handlers.Weather)
+	router.HandleFunc("GET /api/weather", handlers.APIWeather)
 	router.HandleFunc("GET /register", handlers.Register)
 	router.HandleFunc("POST /register", handlers.RegisterPost)
 
