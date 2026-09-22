@@ -4,19 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
 const (
-	weatherLocation  = "Copenhagen, Denmark"
-	weatherLatitude  = 55.6761
-	weatherLongitude = 12.5683
+	weatherLocation      = "Copenhagen, Denmark"
+	weatherLatitude      = 55.6761
+	weatherLongitude     = 12.5683
+	weatherCacheDuration = 30 * time.Minute
 )
 
 var weatherHTTPClient = &http.Client{
 	Timeout: 6 * time.Second,
+}
+
+var weatherCache struct {
+	sync.Mutex
+	data      WeatherData
+	expiresAt time.Time
+	hasData   bool
 }
 
 type openMeteoResponse struct {
@@ -34,6 +43,26 @@ type openMeteoDailyData struct {
 }
 
 func fetchWeatherData() (WeatherData, error) {
+	weatherCache.Lock()
+	defer weatherCache.Unlock()
+
+	if weatherCache.hasData && time.Now().Before(weatherCache.expiresAt) {
+		return weatherCache.data, nil
+	}
+
+	weatherData, err := fetchWeatherDataFromAPI()
+	if err != nil {
+		return WeatherData{}, err
+	}
+
+	weatherCache.data = weatherData
+	weatherCache.expiresAt = time.Now().Add(weatherCacheDuration)
+	weatherCache.hasData = true
+
+	return weatherData, nil
+}
+
+func fetchWeatherDataFromAPI() (WeatherData, error) {
 	requestURL := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast"+
 			"?latitude=%f"+

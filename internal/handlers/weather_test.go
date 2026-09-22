@@ -18,10 +18,21 @@ func (roundTripper weatherRoundTripper) RoundTrip(
 	return roundTripper(request)
 }
 
+func resetWeatherCache() {
+	weatherCache.Lock()
+	defer weatherCache.Unlock()
+
+	weatherCache.data = WeatherData{}
+	weatherCache.expiresAt = time.Time{}
+	weatherCache.hasData = false
+}
+
 func TestFetchWeatherData(t *testing.T) {
+	resetWeatherCache()
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
@@ -110,10 +121,124 @@ func TestFetchWeatherData(t *testing.T) {
 	}
 }
 
-func TestFetchWeatherDataNonOKResponse(t *testing.T) {
+func TestFetchWeatherDataUsesCache(t *testing.T) {
+	resetWeatherCache()
+
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
+	})
+
+	requestCount := 0
+
+	weatherHTTPClient = &http.Client{
+		Transport: weatherRoundTripper(func(
+			_ *http.Request,
+		) (*http.Response, error) {
+			requestCount++
+
+			responseBody := `{
+				"daily": {
+					"time": ["2026-09-22"],
+					"weather_code": [2],
+					"temperature_2m_max": [18.5],
+					"temperature_2m_min": [11.2],
+					"precipitation_probability_max": [25],
+					"wind_speed_10m_max": [7.4],
+					"wind_direction_10m_dominant": [225]
+				}
+			}`
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(responseBody)),
+			}, nil
+		}),
+	}
+
+	_, err := fetchWeatherData()
+	if err != nil {
+		t.Fatalf("first fetchWeatherData() returned an unexpected error: %v", err)
+	}
+
+	_, err = fetchWeatherData()
+	if err != nil {
+		t.Fatalf("second fetchWeatherData() returned an unexpected error: %v", err)
+	}
+
+	if requestCount != 1 {
+		t.Errorf(
+			"expected 1 request to Open-Meteo, got %d",
+			requestCount,
+		)
+	}
+}
+
+func TestFetchWeatherDataRefreshesExpiredCache(t *testing.T) {
+	resetWeatherCache()
+
+	originalClient := weatherHTTPClient
+	t.Cleanup(func() {
+		weatherHTTPClient = originalClient
+		resetWeatherCache()
+	})
+
+	requestCount := 0
+
+	weatherHTTPClient = &http.Client{
+		Transport: weatherRoundTripper(func(
+			_ *http.Request,
+		) (*http.Response, error) {
+			requestCount++
+
+			responseBody := `{
+				"daily": {
+					"time": ["2026-09-22"],
+					"weather_code": [2],
+					"temperature_2m_max": [18.5],
+					"temperature_2m_min": [11.2],
+					"precipitation_probability_max": [25],
+					"wind_speed_10m_max": [7.4],
+					"wind_direction_10m_dominant": [225]
+				}
+			}`
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(strings.NewReader(responseBody)),
+			}, nil
+		}),
+	}
+
+	_, err := fetchWeatherData()
+	if err != nil {
+		t.Fatalf("first fetchWeatherData() returned an unexpected error: %v", err)
+	}
+
+	weatherCache.Lock()
+	weatherCache.expiresAt = time.Now().Add(-time.Minute)
+	weatherCache.Unlock()
+
+	_, err = fetchWeatherData()
+	if err != nil {
+		t.Fatalf("second fetchWeatherData() returned an unexpected error: %v", err)
+	}
+
+	if requestCount != 2 {
+		t.Errorf(
+			"expected 2 requests to Open-Meteo, got %d",
+			requestCount,
+		)
+	}
+}
+
+func TestFetchWeatherDataNonOKResponse(t *testing.T) {
+	resetWeatherCache()
+	originalClient := weatherHTTPClient
+	t.Cleanup(func() {
+		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
@@ -134,9 +259,11 @@ func TestFetchWeatherDataNonOKResponse(t *testing.T) {
 }
 
 func TestFetchWeatherDataMalformedJSON(t *testing.T) {
+	resetWeatherCache()
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
@@ -159,9 +286,11 @@ func TestFetchWeatherDataMalformedJSON(t *testing.T) {
 }
 
 func TestFetchWeatherDataInconsistentDailyData(t *testing.T) {
+	resetWeatherCache()
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
@@ -194,9 +323,11 @@ func TestFetchWeatherDataInconsistentDailyData(t *testing.T) {
 }
 
 func TestFetchWeatherDataRequestError(t *testing.T) {
+	resetWeatherCache()
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
@@ -214,9 +345,11 @@ func TestFetchWeatherDataRequestError(t *testing.T) {
 }
 
 func TestAPIWeather(t *testing.T) {
+	resetWeatherCache()
 	originalClient := weatherHTTPClient
 	t.Cleanup(func() {
 		weatherHTTPClient = originalClient
+		resetWeatherCache()
 	})
 
 	weatherHTTPClient = &http.Client{
