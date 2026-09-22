@@ -11,6 +11,153 @@
 | 08/09/2026        | We communicate privately in Teams, otherwise through GitHub, where we share work.  We check Teams twice per day, morning and midday, every day, except on weekends (unless we become extremely busy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | We need to communicate asynchronously outside office hours, both to structure work and have less formal conversations.                                                                                                                                                                                                                                                                                                                                                                               | Plenary discussion (in person).                                                                                                               |
 | 08/09/2026        | <ul><li>Large decisions are made through at least plenary discussion. Large decisions are decisions which direct future work like architectural decisions, code conventions, templates. Large decisions affect <em>all</em> team members. Full agreement is required.</li><li>Medium decisions may be made between two or three team members. Medium decisions relate to tasks which affect multiple, but not all people. Full agreement between those involved is required.</li><li>Small decisions may be made on one's own. Small decisions include refactoring in files, creating new ones others are not to touch at the same time.</li></ul> | We need clear thresholds for making appropriate decisions to minimize negative effects on others, and to strengthen the rationale behind large, consequential decisions. | Plenary discussion (in person).                                                                                                               |
 
+
+
+## 17/09/2026
+
+### Description of choice
+
+We deployed AscendingMonk directly to our Azure VM running AlmaLinux 9.8
+
+The current deployment is intentionally simple.
+
+The current setup is:
+* The source code is kept in our public GitHub repository.
+* The repository is cloned to the VM using HTTPS.
+* GitHub SSH authentication is not configured on the VM because the repository is public and therefore does not require credentials for cloning or pulling.
+* Go 1.26.7, Git and GCC were installed using AlmaLinux's `dnf` package manager.
+* GCC is required because the Go SQLite driver uses CGO.
+* The application is compiled on the VM rather than continuously run using `go run`.
+* The compiled application and its required `web/` assets are deployed under `/opt/ascendingmonk/`.
+* The SQLite database is stored separately under `/var/lib/ascendingmonk/`.
+* `DB_PATH` is supplied to the application as an environment variable by systemd using an absolute path.
+* A dedicated Linux user called `ascendingmonk` was created to run the application.
+* The application is managed by systemd and configured to start automatically when the VM starts and restart if it fails.
+* The application currently listens directly on port 8080 on all VM network interfaces.
+* Azure's Network Security Group allows incoming traffic to port 8080.
+* `firewalld` was installed and enabled on the AlmaLinux VM as a host-level firewall.
+* The public firewalld zone allows SSH and TCP port 8080. The default `dhcpv6-client` service was left enabled, while the unused Cockpit service was removed.
+* SELinux remains enabled in `Enforcing` mode.
+* The application currently uses HTTP - not yet HTTPS. 
+
+The relevant deployment layout is currently:
+
+```text
+/home/<deployment-user>/AscendingMonk/
+    Git repository and build environment
+
+/opt/ascendingmonk/
+    ascendingmonk
+    web/
+        static/
+        templates/
+
+/var/lib/ascendingmonk/
+    <sqlite-database-file-with-legacy-content>.db
+
+/etc/systemd/system/
+    ascendingmonk.service
+```
+
+The deployment flow is currently approximately:
+
+```text
+Public GitHub repository
+        |
+        | git clone / git pull over HTTPS
+        v
+Source code on VM
+        |
+        | go build with CGO
+        v
+/opt/ascendingmonk/
+        |
+        | systemd
+        v
+AscendingMonk :8080
+        |
+        v
+SQLite database in /var/lib/ascendingmonk/
+```
+
+Incoming traffic currently passes through two network filtering layers:
+
+```text
+Internet
+    |
+    v
+Azure Network Security Group
+    |
+    | TCP 22 / TCP 8080
+    v
+AlmaLinux firewalld
+    |
+    | SSH / TCP 8080
+    v
+VM
+    |
+    +-- SSH :22
+    |
+    +-- AscendingMonk :8080
+```
+
+### Reason for choice
+
+The deployment was deliberately kept simple because this is an early deployment exercise. 
+
+We chose to build a binary instead of using `go run` because the Go compiler is needed during deployment, but not while the application is running. This separates building the application from running it.
+
+A dedicated `ascendingmonk` Linux user is used rather than running the application as `<deployment-user>` or root. The service account does not need interactive login or sudo access and only needs access to the resources required by the application. This reduces the privileges available to the application.
+
+The source code, deployed application, and mutable application data are deliberately separated:
+
+* `/home/<deployment-user>/AscendingMonk/` is used for source code and building.
+* `/opt/ascendingmonk/` contains the deployed application and its runtime web assets.
+* `/var/lib/ascendingmonk/` contains persistent application data.
+
+The SQLite database is not part of the Git repository or deployment directory.
+
+We chose an absolute `DB_PATH` (`/var/lib/ascendingmonk/<sqlite-database-file-with-legacy-content>.db`) instead of retaining the relative path used during local development. This avoids making database access dependent on the directory from which the application happens to be started.
+
+Systemd was chosen instead of a custom shell script, `nohup`, or keeping an SSH terminal open. It provides process supervision, logging, automatic startup after reboot, and restart behaviour using the standard service manager already provided by AlmaLinux.
+
+The Git repository is public. Therefore, cloning over HTTPS allows the VM to pull the repository without storing a GitHub private key, personal access token, or other GitHub credentials on the VM.
+
+Port 8080 is currently exposed directly.
+
+We also installed `firewalld` even though Azure provides Network Security Group filtering. This gives us both cloud-level network filtering and a firewall on the VM itself, and allows us to explicitly control which services the operating system accepts from the network.
+
+SELinux was left in `Enforcing` mode rather than disabled. The application works with SELinux enabled.
+
+### How was this decided?
+
+The deployment was built and tested incrementally rather than configuring everything at once.
+
+First, we verified the environment and found that the VM was running AlmaLinux 9.8. The VM initially did not have Git, Go or GCC installed. AlmaLinux AppStream provided Go 1.26.7, which satisfies the project's `go 1.26.0` requirement, so we chose to use the distribution package rather than manually installing Go.
+
+After installing Git, Go and GCC, we cloned the public repository over HTTPS and successfully compiled the application using CGO.
+
+We then created the dedicated `ascendingmonk` service user and moved the SQLite database into `/var/lib/ascendingmonk/`. We tested the compiled application manually as the service user with the production `DB_PATH` before configuring systemd. This confirmed that the application, SQLite driver and database permissions worked together.
+
+The first systemd deployment was not successful. Although the binary started, HTTP requests failed because template files such as `web/templates/layout.html` could not be found. We therefore changed the deployment layout to `/opt/ascendingmonk/`, copied both the binary and `web/` directory there, and set that directory as the systemd `WorkingDirectory`.
+
+After this change, `curl http://localhost:8080/` returned the expected HTML.
+
+We then verified that the application was listening on all interfaces:
+
+```text
+*:8080
+```
+
+and confirmed that both `localhost:8080` and the VM's private address `<VM private IP>:8080` returned the application.
+
+Access through the VM's public IP initially timed out. Because the application was confirmed to work through the VM's private network interface, we identified the remaining issue as external network configuration. An Azure Network Security Group rule was added to allow inbound TCP traffic on port 8080. After this change, the application became accessible from an external browser.
+
+Finally, `firewalld` was installed on AlmaLinux. The `public` zone was associated with `eth0`. SSH was retained, TCP port 8080 was explicitly allowed, the unused Cockpit service was removed, and the default `dhcpv6-client` service was retained. We tested both a new SSH connection and external browser access after applying the firewall configuration.
+
+The final deployment was also tested after disconnecting the SSH sessions to verify that the application does not depend on an interactive terminal and continues to run through systemd.
+
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
