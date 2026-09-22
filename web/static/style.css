@@ -57,6 +57,10 @@ nav h1, nav a {
     float: right;
 }
 
+#nav-weather {
+    float: right;
+}
+
 input {
     width: 85%;
     padding: 10px;
