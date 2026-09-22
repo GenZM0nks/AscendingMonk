@@ -15,6 +15,8 @@ const (
 	weatherLongitude = 12.5683
 )
 
+var weatherHTTPClient = http.DefaultClient
+
 type openMeteoResponse struct {
 	Daily openMeteoDailyData `json:"daily"`
 }
@@ -44,7 +46,7 @@ func fetchWeatherData() (WeatherData, error) {
 		weatherLongitude,
 	)
 
-	response, err := http.Get(requestURL)
+	response, err := weatherHTTPClient.Get(requestURL)
 	if err != nil {
 		return WeatherData{}, fmt.Errorf("failed to fetch weather: %w", err)
 	}
