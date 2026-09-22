@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -225,6 +226,65 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	}
 
 	return foundUser, nil, nil
+}
+
+// LoginAPI handles user login
+//
+// @Summary Login a user
+// @Description Login to an existing user account
+// @Accept application/x-www-form-urlencoded
+// @Produce json
+// @Param username formData string true "Username"
+// @Param password formData string true "Password"
+// @Success 200 {object} AuthResponse
+// @Failure 422 {object} HTTPValidationError
+// @Tags API
+// @Router /api/login [post]
+func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
+	requestError := request.ParseForm()
+
+	if requestError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to parse form",
+			http.StatusBadRequest,
+		)
+		return
+	}
+
+	loginRequest := LoginRequest{
+		Username: request.Form["username"][0],
+		Password: request.Form["password"][0],
+	}
+
+	_, validationErrors, loginError := loginUser(loginRequest)
+
+	if loginError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to login user",
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
+	if len(validationErrors) > 0 {
+		responseWriter.Header().Set("Content-Type", "application/json")
+		responseWriter.WriteHeader(http.StatusUnprocessableEntity)
+
+		json.NewEncoder(responseWriter).Encode(HTTPValidationError{
+			Detail: validationErrors,
+		})
+
+		return
+	}
+
+	responseWriter.Header().Set("Content-Type", "application/json")
+
+	json.NewEncoder(responseWriter).Encode(AuthResponse{
+		StatusCode: http.StatusOK,
+		Message:    "You were successfully logged in",
+	})
 }
 
 // LoginRequest stores request data
