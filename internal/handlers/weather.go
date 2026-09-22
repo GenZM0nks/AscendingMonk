@@ -10,6 +10,7 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
+// Weather configuration for the Copenhagen forecast and cache duration.
 const (
 	weatherLocation      = "Copenhagen, Denmark"
 	weatherLatitude      = 55.6761
@@ -17,10 +18,12 @@ const (
 	weatherCacheDuration = 30 * time.Minute
 )
 
+// weatherHTTPClient handles requests to Open-Meteo with a fixed timeout.
 var weatherHTTPClient = &http.Client{
 	Timeout: 6 * time.Second,
 }
 
+// weatherCache stores the most recently fetched forecast and its expiration time.
 var weatherCache struct {
 	sync.Mutex
 	data      WeatherData
@@ -28,10 +31,12 @@ var weatherCache struct {
 	hasData   bool
 }
 
+// openMeteoResponse represents the weather forecast response returned by Open-Meteo.
 type openMeteoResponse struct {
 	Daily openMeteoDailyData `json:"daily"`
 }
 
+// openMeteoDailyData contains the daily forecast fields returned by Open-Meteo.
 type openMeteoDailyData struct {
 	Time                     []string  `json:"time"`
 	TemperatureMaximum       []float64 `json:"temperature_2m_max"`
@@ -42,6 +47,7 @@ type openMeteoDailyData struct {
 	WeatherCode              []int     `json:"weather_code"`
 }
 
+// fetchWeatherData returns cached weather data or fetches fresh data when the cache has expired.
 func fetchWeatherData() (WeatherData, error) {
 	weatherCache.Lock()
 	defer weatherCache.Unlock()
@@ -62,6 +68,7 @@ func fetchWeatherData() (WeatherData, error) {
 	return weatherData, nil
 }
 
+// fetchWeatherDataFromAPI fetches and converts the weather forecast from Open-Meteo.
 func fetchWeatherDataFromAPI() (WeatherData, error) {
 	requestURL := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast"+
@@ -166,6 +173,7 @@ func APIWeather(responseWriter http.ResponseWriter, _ *http.Request) {
 	}
 }
 
+// formatWeatherDate converts an ISO date into a display-friendly date.
 func formatWeatherDate(date string) string {
 	parsedDate, err := time.Parse("2006-01-02", date)
 	if err != nil {
@@ -175,6 +183,7 @@ func formatWeatherDate(date string) string {
 	return parsedDate.Format("Monday, 2 January")
 }
 
+// weatherDescription converts a WMO weather code into a readable description.
 func weatherDescription(code int) string {
 	switch code {
 	case 0:
@@ -238,6 +247,7 @@ func weatherDescription(code int) string {
 	}
 }
 
+// windDirection converts wind direction degrees into a compass direction.
 func windDirection(degrees int) string {
 	directions := []string{
 		"N", "NNE", "NE", "ENE",

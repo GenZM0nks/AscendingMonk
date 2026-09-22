@@ -10,14 +10,17 @@ import (
 	"time"
 )
 
+// weatherRoundTripper provides a mock HTTP transport for weather tests.
 type weatherRoundTripper func(request *http.Request) (*http.Response, error)
 
+// RoundTrip executes the fake HTTP transport used by weather tests.
 func (roundTripper weatherRoundTripper) RoundTrip(
 	request *http.Request,
 ) (*http.Response, error) {
 	return roundTripper(request)
 }
 
+// resetWeatherCache clears shared weather cache state between tests.
 func resetWeatherCache() {
 	weatherCache.Lock()
 	defer weatherCache.Unlock()
@@ -27,6 +30,7 @@ func resetWeatherCache() {
 	weatherCache.hasData = false
 }
 
+// TestFetchWeatherData verifies that Open-Meteo data is converted into weather data.
 func TestFetchWeatherData(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -121,6 +125,7 @@ func TestFetchWeatherData(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataUsesCache verifies that valid cached data prevents additional API requests.
 func TestFetchWeatherDataUsesCache(t *testing.T) {
 	resetWeatherCache()
 
@@ -175,6 +180,7 @@ func TestFetchWeatherDataUsesCache(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataRefreshesExpiredCache verifies that expired cached data is refreshed.
 func TestFetchWeatherDataRefreshesExpiredCache(t *testing.T) {
 	resetWeatherCache()
 
@@ -233,6 +239,7 @@ func TestFetchWeatherDataRefreshesExpiredCache(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataNonOKResponse verifies that non-successful API responses return an error.
 func TestFetchWeatherDataNonOKResponse(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -258,6 +265,7 @@ func TestFetchWeatherDataNonOKResponse(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataMalformedJSON verifies that malformed API responses return an error.
 func TestFetchWeatherDataMalformedJSON(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -285,6 +293,7 @@ func TestFetchWeatherDataMalformedJSON(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataInconsistentDailyData verifies that inconsistent daily forecast data returns an error.
 func TestFetchWeatherDataInconsistentDailyData(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -322,6 +331,7 @@ func TestFetchWeatherDataInconsistentDailyData(t *testing.T) {
 	}
 }
 
+// TestFetchWeatherDataRequestError verifies that HTTP request failures return an error.
 func TestFetchWeatherDataRequestError(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -344,6 +354,7 @@ func TestFetchWeatherDataRequestError(t *testing.T) {
 	}
 }
 
+// TestAPIWeather verifies that the weather API endpoint returns weather data as JSON.
 func TestAPIWeather(t *testing.T) {
 	resetWeatherCache()
 	originalClient := weatherHTTPClient
@@ -411,6 +422,7 @@ func TestAPIWeather(t *testing.T) {
 	}
 }
 
+// TestWeatherHTTPClientTimeout verifies that weather requests use the configured timeout.
 func TestWeatherHTTPClientTimeout(t *testing.T) {
 	expectedTimeout := 6 * time.Second
 
