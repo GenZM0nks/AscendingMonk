@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type weatherRoundTripper func(request *http.Request) (*http.Response, error)
@@ -273,6 +274,18 @@ func TestAPIWeather(t *testing.T) {
 		t.Errorf(
 			"expected response body to contain Copenhagen location, got %s",
 			responseBody,
+		)
+	}
+}
+
+func TestWeatherHTTPClientTimeout(t *testing.T) {
+	expectedTimeout := 6 * time.Second
+
+	if weatherHTTPClient.Timeout != expectedTimeout {
+		t.Errorf(
+			"expected weather HTTP client timeout %v, got %v",
+			expectedTimeout,
+			weatherHTTPClient.Timeout,
 		)
 	}
 }

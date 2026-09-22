@@ -15,7 +15,9 @@ const (
 	weatherLongitude = 12.5683
 )
 
-var weatherHTTPClient = http.DefaultClient
+var weatherHTTPClient = &http.Client{
+	Timeout: 6 * time.Second,
+}
 
 type openMeteoResponse struct {
 	Daily openMeteoDailyData `json:"daily"`
