@@ -91,7 +91,6 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 		return
 	}
-	_, _ = database.Execute("DELETE FROM session_tokens") //empty all the test session data
 	var databaseError error
 	var sessionToken string
 	var csrfToken string
@@ -141,25 +140,11 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		}
 
 	}
-	//test
-	sqlRowPointer := database.QueryRow("SELECT * FROM session_tokens")
-	var session_value string
-	var csrf_value string
-	var created_at time.Time
-	var user_id int64
-	sqlRowPointer.Scan(&session_value, &csrf_value, &created_at, &user_id)
-	fmt.Println(user_id)
-	fmt.Println(session_value)
-	fmt.Println(csrf_value)
-	fmt.Println(created_at.String())
-	//test
-	fmt.Print("token generated: ")
-	fmt.Println(sessionToken)
 
 	http.SetCookie(responseWriter, &http.Cookie{
 		Name:     "session_token",
 		Value:    sessionToken,
-		Expires:  time.Now().Add(2 * time.Minute),
+		Expires:  time.Now().Add(2 * time.Hour),
 		HttpOnly: true,
 		Path:     "/", //Should ensure that the session token is sent for all endpoints
 	})
@@ -167,7 +152,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	http.SetCookie(responseWriter, &http.Cookie{
 		Name:     "csrf_token",
 		Value:    csrfToken,
-		Expires:  time.Now().Add(2 * time.Minute),
+		Expires:  time.Now().Add(2 * time.Hour),
 		HttpOnly: false,
 	})
 
@@ -240,24 +225,6 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	}
 
 	return foundUser, nil, nil
-}
-
-// The method below is only for testing that sessions are set up correctly
-func Protected(w http.ResponseWriter, r *http.Request) {
-	if err := session.Authorrize(r); err != nil {
-		http.Error(
-			w,
-			"You do not have acces",
-			http.StatusForbidden,
-		)
-		return
-	}
-	fmt.Println("is authorized")
-	http.Error(
-		w,
-		"secrets, secrets, secrets",
-		http.StatusOK,
-	)
 }
 
 // LoginRequest stores request data

@@ -49,8 +49,6 @@ func main() {
 	router.HandleFunc("GET /api/search", handlers.APISearch)
 	router.HandleFunc("GET /register", handlers.Register)
 	router.HandleFunc("POST /register", handlers.RegisterPost)
-	//Route below only for testing
-	router.HandleFunc("GET /protected", handlers.Protected)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))
