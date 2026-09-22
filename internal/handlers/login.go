@@ -153,8 +153,8 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	fmt.Println(csrf_value)
 	fmt.Println(created_at.String())
 	//test
-	fmt.Print("token generated")
-	fmt.Print(sessionToken)
+	fmt.Print("token generated: ")
+	fmt.Println(sessionToken)
 
 	http.SetCookie(responseWriter, &http.Cookie{
 		Name:     "session_token",
@@ -252,7 +252,7 @@ func Protected(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-
+	fmt.Println("is authorized")
 	http.Error(
 		w,
 		"secrets, secrets, secrets",
