@@ -51,8 +51,8 @@ func Authorrize(request *http.Request) error {
 	fmt.Println(csrf_value)
 	fmt.Println(created_at)
 	//Check if session is expired
-
-	if created_at.After(created_at.Add(1 * time.Minute)) {
+	fmt.Println(time.Now().String() + " is after " + created_at.Add(2*time.Minute).String())
+	if time.Now().After(created_at.Add(1 * time.Minute)) {
 		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session_value)
 		if databaseError != nil {
 			return databaseError
