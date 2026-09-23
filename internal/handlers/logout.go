@@ -28,5 +28,6 @@ func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.String())
 	}
 
+	responseWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
 	responseWriter.Write(searchResultsJSON)
 }
