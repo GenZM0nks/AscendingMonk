@@ -44,3 +44,8 @@ func TestAbout(test *testing.T) {
 		test.Error("expected the page to reference the team image")
 	}
 }
+
+// TestFail runs a failing test to test the pre-push hook
+func TestFail(test *testing.T) {
+	test.Fail()
+}

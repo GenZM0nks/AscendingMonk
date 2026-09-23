@@ -4,8 +4,7 @@ export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 export PATH="$HOME/.local/bin:$HOME/bin:$GOBIN:/usr/local/bin:$PATH"
 
-"$GOBIN/revive" cmd/main
-revive cmd/main
+revive -set_exit_status ./...
 lint_status=$?
 
 if [ "$lint_status" -ne 0 ]; then
