@@ -33,14 +33,14 @@ func Authorize(request *http.Request) error {
 		return errors.New("session: session token is missing data")
 	}
 
-	//Get session data
+	// Get session data
 	sessionSQLRow := database.QueryRow("SELECT * FROM session_tokens WHERE session_value = ?", sessionToken.Value)
 	var session sessionData
 	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &session.createdAt, &session.id)
 	if missingSessionError != nil {
 		return missingSessionError
 	}
-	//Check if session is expired
+	// Check if session is expired
 	if time.Now().After(session.createdAt.Add(2 * time.Hour)) {
 		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session.sessionValue)
 		if databaseError != nil {
@@ -49,7 +49,7 @@ func Authorize(request *http.Request) error {
 		return errors.New("session: session is expired")
 	}
 
-	//Get user data
+	// Get user data
 	userSQLRow := database.QueryRow("SELECT username, password FROM users WHERE id = ?", session.id)
 	var foundUsername string
 	var foundPassword string
