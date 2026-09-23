@@ -260,6 +260,32 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/weather": {
+            "get": {
+                "description": "Fetch a seven-day weather forecast for Copenhagen.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Fetch weather forecast.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -285,6 +311,14 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/handlers.WeatherData"
+                }
+            }
+        },
         "handlers.ValidationError": {
             "type": "object",
             "properties": {
@@ -297,6 +331,46 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.WeatherData": {
+            "type": "object",
+            "properties": {
+                "days": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.WeatherDay"
+                    }
+                },
+                "location": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.WeatherDay": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "precipitationProbability": {
+                    "type": "integer"
+                },
+                "temperatureMaximum": {
+                    "type": "number"
+                },
+                "temperatureMinimum": {
+                    "type": "number"
+                },
+                "weatherCode": {
+                    "type": "integer"
+                },
+                "windDirectionDominant": {
+                    "type": "integer"
+                },
+                "windSpeedMaximum": {
+                    "type": "number"
                 }
             }
         }
