@@ -129,6 +129,17 @@ paths:
       summary: Login a user
       tags:
       - API
+  /api/logout:
+    get:
+      description: Log users out and delete their session data.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Log users out.
+      tags:
+      - Pages
   /api/search:
     get:
       description: Fetch query data from the database.
