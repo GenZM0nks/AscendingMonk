@@ -157,6 +157,15 @@ Finally, `firewalld` was installed on AlmaLinux. The `public` zone was associate
 
 The final deployment was also tested after disconnecting the SSH sessions to verify that the application does not depend on an interactive terminal and continues to run through systemd.
 
+## 22/09/2026
+### Description of choice
+We chose to implement git hooks to minimize the risk of pushing "bad" (code which the linter throws errors on or for which one or more tests fail) code to production. Two hooks were implemented, one which runs `pre-push` and another `pre-commit`. The `pre-commit` hook runs the linter on the entire codebase, and if it throws an error, git will refuse to commit the changes (unless one bypasses it manually). The one running before pushes runs all tests and the linter once more.
+
+### Reason for choice
+We opted not to run tests before each commit to maximize potential flexibility in development methodology, balancing that with our wishes for smaller commits in general. In an XP-process, a first commit for a feature may be a finished test which fails. Running tests here would be devastating in that the developer would not be allowed to commit without bypassing, which defeats the purpose of having the hook. This flexibility is crucial in this subject, since we need to have room to experiment with different methodologies to find optimal ones for our context. Our general criterion is that a feature ~ (\approx) a PR, and a feature is complete AND has tests, or has none, for tests to be written later.
+
+### How was this decided
+Personal discretion by Max-Emil. Later debate allowed for by publishing a PR, allowing for revisions and general agreement.
 
 ````markdown
 ## 22/09/2026
