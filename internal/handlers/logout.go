@@ -1,7 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+
+	"github.com/GenZM0nks/AscendingMonk/internal/database"
 )
 
 // APILogout handles logging out users on /api/logout.
@@ -12,6 +16,17 @@ import (
 // @Success 200
 // @Tags Pages
 // @Router /api/logout [get]
-func APILogout(responseWriter http.ResponseWriter, _ *http.Request) {
-	responseWriter.Write([]byte("abc"))
+func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
+	searchResultsJSON, err := json.Marshal("You were logged out")
+
+	if err != nil {
+		responseWriter.Write(fmt.Appendln(nil, "Error converting search results to JSON: %w\n", err.Error()))
+	}
+
+	token, err := request.Cookie("session_token") // Currently ignores if there's no token
+	if err == nil {
+		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.String())
+	}
+
+	responseWriter.Write(searchResultsJSON)
 }

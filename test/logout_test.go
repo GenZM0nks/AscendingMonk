@@ -46,7 +46,7 @@ func TestAPILogout(test *testing.T) {
 		test.Fatalf("expected status %d, got %d", http.StatusOK, responseRecorder.Code)
 	}
 
-	var actualResults []handlers.SearchResult
+	var actualResults string
 	if err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResults); err != nil {
 		test.Fatalf("response was not valid JSON: %v", err)
 	}
