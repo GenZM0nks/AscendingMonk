@@ -22,9 +22,9 @@ func GenerateToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(token), nil
 }
 
-// Authorrize accepts a request, and validates that the request has a session token, that is saved and has not expired
+// Authorize accepts a request, and validates that the request has a session token, that is saved and has not expired
 // and can return errors
-func Authorrize(request *http.Request) error {
+func Authorize(request *http.Request) error {
 	sessionToken, tokenError := request.Cookie("session_token")
 	if tokenError != nil {
 		return tokenError
