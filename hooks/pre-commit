@@ -1,0 +1,15 @@
+#!/bin/bash
+
+export GOPATH="$HOME/go"
+export GOBIN="$GOPATH/bin"
+export PATH="$HOME/.local/bin:$HOME/bin:$GOBIN:/usr/local/bin:$PATH"
+
+revive -set_exit_status ./... 
+lint_status=$?
+
+if [ "$lint_status" -ne 0 ]; then
+    echo "Linting failed. Commit rejected."
+    exit "$lint_status"
+fi
+
+exit 0
