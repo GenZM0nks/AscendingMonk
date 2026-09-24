@@ -51,6 +51,7 @@ func main() {
 	router.HandleFunc("GET /api/weather", handlers.APIWeather)
 	router.HandleFunc("GET /register", handlers.Register)
 	router.HandleFunc("POST /register", handlers.RegisterPost)
+	router.HandleFunc("GET /api/logout", handlers.APILogout)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))

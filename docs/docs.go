@@ -115,6 +115,23 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/logout": {
+            "get": {
+                "description": "Log users out and delete their session data.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Log users out.",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
         "/api/search": {
             "get": {
                 "description": "Fetch query data from the database.",

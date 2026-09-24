@@ -3,11 +3,14 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
+	"github.com/GenZM0nks/AscendingMonk/internal/session"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
@@ -55,12 +58,12 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		return
 	}
 
-	loginRequest := LoginData{
+	loginRequest := LoginRequest{
 		Username: requestPointer.Form["username"][0],
 		Password: requestPointer.Form["password"][0],
 	}
 
-	validationErrors, loginError := loginUser(loginRequest)
+	user, validationErrors, loginError := loginUser(loginRequest)
 
 	if loginError != nil {
 		http.Error(
@@ -89,6 +92,70 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 		return
 	}
+	var databaseError error
+	var sessionToken string
+	var csrfToken string
+	for hasValidToken := true; hasValidToken; hasValidToken = databaseError != nil { // hasValidToken = databaseError != nil could become hasValidToken = someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
+
+		var tokenError error
+		sessionToken, tokenError = session.GenerateToken()
+
+		if tokenError != nil {
+			http.Error(
+				responseWriter,
+				"Failed to generate token",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		tokenError = nil
+		csrfToken, tokenError = session.GenerateToken()
+
+		if tokenError != nil {
+			http.Error(
+				responseWriter,
+				"Failed to generate token",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+		// Tokens are randomly generated, the liklyhood of two identical is slim to none. Nonetheless. If two identical tokens happen to be generated, the database with send back an error (for not upholding the UNIQUE CONSTRAINT), This will cause the program to enter the statement below and crash the system, instead of the intented do-while loop for generating a new token.
+		_, databaseError := database.Execute(
+			"INSERT INTO session_tokens (session_value, csrf_value, created_at, user_id) VALUES (?, ?, ?, ?)",
+			sessionToken,
+			csrfToken,
+			time.Now(),
+			user.id,
+		)
+
+		if databaseError != nil {
+			fmt.Print(databaseError)
+			http.Error(
+				responseWriter,
+				"Failed to login",
+				http.StatusInternalServerError,
+			)
+			return
+		}
+
+	}
+
+	http.SetCookie(responseWriter, &http.Cookie{
+		Name:     "session_token",
+		Value:    sessionToken,
+		Expires:  time.Now().Add(2 * time.Hour),
+		HttpOnly: true,
+		Path:     "/", // Should ensure that the session token is sent for all endpoints
+	})
+
+	http.SetCookie(responseWriter, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Expires:  time.Now().Add(2 * time.Hour),
+		HttpOnly: false,
+	})
 
 	http.Redirect(
 		responseWriter,
@@ -99,7 +166,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 }
 
-func loginUser(loginRequest LoginData) ([]ValidationError, error) {
+func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	if loginRequest.Username == "" {
@@ -119,14 +186,14 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	}
 
 	if len(validationErrors) > 0 {
-		return validationErrors, nil
+		return nil, validationErrors, nil
 	}
 
-	sqlRowPointer := database.QueryRow("SELECT username, password FROM users WHERE username = ?", loginRequest.Username)
-	foundUser := &LoginData{}
-	loginError := sqlRowPointer.Scan(&foundUser.Username, &foundUser.Password)
+	sqlRowPointer := database.QueryRow("SELECT id, username, password FROM users WHERE username = ?", loginRequest.Username)
+	foundUser := &LoginResult{}
+	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password)
 	if loginError != nil && loginError != sql.ErrNoRows {
-		return nil, loginError
+		return nil, nil, loginError
 	}
 	if loginError == sql.ErrNoRows {
 		validationErrors = append(validationErrors, ValidationError{
@@ -137,13 +204,13 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	}
 
 	if len(validationErrors) > 0 {
-		return validationErrors, nil
+		return nil, validationErrors, nil
 	}
 
 	hashError := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(loginRequest.Password))
 
 	if (hashError != nil) && hashError != bcrypt.ErrMismatchedHashAndPassword {
-		return nil, hashError
+		return nil, nil, hashError
 	}
 
 	if hashError == bcrypt.ErrMismatchedHashAndPassword {
@@ -155,10 +222,10 @@ func loginUser(loginRequest LoginData) ([]ValidationError, error) {
 	}
 
 	if len(validationErrors) > 0 {
-		return validationErrors, nil
+		return nil, validationErrors, nil
 	}
 
-	return nil, nil
+	return foundUser, nil, nil
 }
 
 // LoginAPI handles user login
@@ -185,12 +252,12 @@ func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	loginRequest := LoginData{
+	loginRequest := LoginRequest{
 		Username: request.Form["username"][0],
 		Password: request.Form["password"][0],
 	}
 
-	validationErrors, loginError := loginUser(loginRequest)
+	_, validationErrors, loginError := loginUser(loginRequest)
 
 	if loginError != nil {
 		http.Error(
@@ -220,9 +287,17 @@ func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	})
 }
 
-// LoginData stores request and query result data relevant to login in
+// LoginRequest stores request data
 // Allows us pass login data together as one entity
-type LoginData struct {
+type LoginRequest struct {
+	Username string
+	Password string
+}
+
+// LoginResult stores data from queries.
+// Allows us to extract all data when querying
+type LoginResult struct {
+	id       uint64
 	Username string
 	Password string
 }
