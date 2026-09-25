@@ -28,7 +28,7 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 	dbQueryContent := `SELECT title, url, content FROM pages WHERE language = ? AND content LIKE ? AND title not LIKE ?`
 	rowsContent, err := database.Query(dbQueryContent, language, "%"+query+"%", "%"+query+"%")
 
-	if err != nil || errTitle != nil{
+	if err != nil || errTitle != nil {
 		return nil, err
 	}
 
@@ -64,7 +64,7 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 		results = append(results, searchResult)
 	}
 
-	if rowsContent.Err() != nil{
+	if rowsContent.Err() != nil {
 		return nil, err
 	}
 
