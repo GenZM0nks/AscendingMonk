@@ -21,17 +21,21 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 		return results, nil
 	}
 
-	dbQuery := `SELECT title, url, content FROM pages WHERE language = ? AND content LIKE ?`
-	rows, err := database.Query(dbQuery, language, "%"+query+"%")
 
-	if err != nil {
+	dbQueryTitle := `SELECT title, url, content FROM pages WHERE language = ? AND title LIKE ?`
+	rowsTitle, errTitle := database.Query(dbQueryTitle, language, "%"+query+"%")
+
+	dbQueryContent := `SELECT title, url, content FROM pages WHERE language = ? AND content LIKE ? AND title not LIKE ?`
+	rowsContent, err := database.Query(dbQueryContent, language, "%"+query+"%", "%"+query+"%")
+
+	if err != nil || errTitle != nil {
 		return nil, err
 	}
 
-	for rows.Next() {
+	for rowsTitle.Next() {
 		var searchResult SearchResult
 
-		err = rows.Scan(
+		err = rowsTitle.Scan(
 			&searchResult.Title,
 			&searchResult.URL,
 			&searchResult.Description,
@@ -44,7 +48,23 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 		results = append(results, searchResult)
 	}
 
-	if rows.Err() != nil {
+	for rowsContent.Next() {
+		var searchResult SearchResult
+
+		err = rowsContent.Scan(
+			&searchResult.Title,
+			&searchResult.URL,
+			&searchResult.Description,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, searchResult)
+	}
+
+	if rowsContent.Err() != nil {
 		return nil, err
 	}
 
