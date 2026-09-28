@@ -10,7 +10,7 @@ import (
 
 // SetupTestDatabase starts an empty in-memory sqlite3 database for testing
 func SetupTestDatabase(test *testing.T) *sql.DB {
-	_database, err := sql.Open("sqlite3", ":memory:")
+	_database, err := sql.Open("sqlite3", "file:testdb?mode=memory&cache=shared")
 	if err != nil {
 		test.Fatalf("Failed to open database: %v", err)
 	}
