@@ -1034,7 +1034,7 @@ The alternatives are not necessarily worse. Some would become preferable if the 
 ### Description of choice
 Decided to install the following tools for software quality analysis  
 
-#### SonarQube with SonarCloud  
+#### SonarQube with SonarQube Cloud  
   
 SonarQube is integrated with our GitHub repositories, so most of the time you can see the relevant results directly in GitHub.
 - Pull Requests: SonarQube automatically analyzes PRs. The PR will show the SonarQube Quality Gate result and any issues found in the changed code.
