@@ -1028,7 +1028,51 @@ No API key                      Authenticated commercial provider
 ```
 
 The alternatives are not necessarily worse. Some would become preferable if the requirements changed. The important part of the decision is therefore not only **what we selected**, but **why that level of complexity matched the current problem** and what conditions would cause us to revisit it.
+  
 
+## 04/09/2026
+### Description of choice
+Decided to install the following tools for software quality analysis  
+
+#### SonarQube with SonarCloud  
+  
+SonarQube is integrated with our GitHub repositories, so most of the time you can see the relevant results directly in GitHub.
+- Pull Requests: SonarQube automatically analyzes PRs. The PR will show the SonarQube Quality Gate result and any issues found in the changed code.
+- Quality Gate: This is the overall pass/fail check for the PR. If the gate fails, check the SonarQube results to see what needs attention.
+- Full reports: For a detailed overview—issues, security hotspots, coverage, duplication, maintainability, etc.—follow the SonarQube link from the PR or log in to SonarQube Cloud with your GitHub account and open the project.
+
+#### Qlty (Code Climate)
+  
+Qlty is integrated with our GitHub repositories, so most feedback will appear directly as part of our normal GitHub workflow.
+- Pull Requests: Qlty automatically analyzes PRs and reports code-quality issues and other relevant results directly in GitHub.
+- Checks: Look at the PR's Checks section to see whether the Qlty analysis passed and whether anything needs attention before merging.
+- Full reports: For more detailed results and project-wide information, follow the Qlty link from GitHub or log in to Qlty with your GitHub account and open the project.
+  
+#### Code Rabbit
+  
+CodeRabbit is integrated with our GitHub repositories and acts as an additional reviewer of pull requests.
+- Pull Requests: CodeRabbit automatically reviews new PRs and comments directly in GitHub with potential bugs, security concerns, edge cases, and maintainability issues.
+- Review feedback: Check CodeRabbit's comments alongside the normal human review. Its suggestions are advisory—not automatically something that must be changed.
+- Follow-up changes: CodeRabbit can review updates to a PR as new commits are pushed.
+- Full details: More information can be accessed through CodeRabbit's links in the PR or by signing in to CodeRabbit with your GitHub account.
+  
+#### DeepSource
+  
+DeepSource is integrated with our GitHub repositories and automatically analyzes code changes for quality, security, and reliability issues.
+- Pull Requests: DeepSource analyzes new PRs and reports its results directly in GitHub.
+- Checks: Look at the PR's Checks section to see whether the DeepSource analysis passes and what issues were found.
+- Issues: DeepSource can identify bugs, security problems, anti-patterns, and other code-quality issues.
+- Full reports: For detailed findings and project-wide analysis, follow the DeepSource links from GitHub or sign in to DeepSource with your GitHub account.
+  
+#### Reason for choice
+
+To improve code quality, get insights about our code and prevent technical debt. All these tools were mentioned in an assignment, but it was not required to install them all. The decision was made to install them all to get a better feel for the possibilitis with this kind of tech. And to have more material for practicing the human decision about what review input to actually use and waht to ignore or our specific context and goals.
+  
+### How was this decided?
+  
+Installing tools for software quality analysis was part of an assignment.  
+To install all of the mentioned tools was a decision made by Janus alone, with the possibility of uninstalling some of them.
+  
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
