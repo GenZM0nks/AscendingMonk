@@ -25,7 +25,7 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 	rowsTitle, errTitle := database.Query(dbQueryTitle, language, "%"+query+"%")
 
 	if errTitle != nil {
-		return nil, err
+		return nil, errTitle
 	}
 
 	defer rowsTitle.Close()
