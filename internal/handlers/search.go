@@ -21,17 +21,28 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 		return results, nil
 	}
 
-	dbQuery := `SELECT title, url, content FROM pages WHERE language = ? AND content LIKE ?`
-	rows, err := database.Query(dbQuery, language, "%"+query+"%")
+	dbQueryTitle := `SELECT title, url, content FROM pages WHERE language = ? AND title LIKE ?`
+	rowsTitle, errTitle := database.Query(dbQueryTitle, language, "%"+query+"%")
+
+	if errTitle != nil {
+		return nil, errTitle
+	}
+
+	defer rowsTitle.Close()
+
+	dbQueryContent := `SELECT title, url, content FROM pages WHERE language = ? AND content LIKE ? AND title not LIKE ?`
+	rowsContent, err := database.Query(dbQueryContent, language, "%"+query+"%", "%"+query+"%")
 
 	if err != nil {
 		return nil, err
 	}
 
-	for rows.Next() {
+	defer rowsContent.Close()
+
+	for rowsTitle.Next() {
 		var searchResult SearchResult
 
-		err = rows.Scan(
+		err = rowsTitle.Scan(
 			&searchResult.Title,
 			&searchResult.URL,
 			&searchResult.Description,
@@ -44,7 +55,23 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 		results = append(results, searchResult)
 	}
 
-	if rows.Err() != nil {
+	for rowsContent.Next() {
+		var searchResult SearchResult
+
+		err = rowsContent.Scan(
+			&searchResult.Title,
+			&searchResult.URL,
+			&searchResult.Description,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, searchResult)
+	}
+
+	if rowsContent.Err() != nil {
 		return nil, err
 	}
 
@@ -99,12 +126,15 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 
 	if err != nil {
 		responseWriter.Write(fmt.Appendln(nil, "Error reading search results from database: %w\n", err.Error()))
+		return
 	}
 
+	responseWriter.Header().Set("Content-Type", "application/json")
 	searchResultsJSON, err := json.Marshal(searchResults)
 
 	if err != nil {
 		responseWriter.Write(fmt.Appendln(nil, "Error converting search results to JSON: %w\n", err.Error()))
+		return
 	}
 
 	responseWriter.Write(searchResultsJSON)
