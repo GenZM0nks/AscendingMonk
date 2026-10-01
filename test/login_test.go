@@ -167,7 +167,8 @@ func TestAPILogin_WithWrongUsernameAndPassword(test *testing.T) {
 
 }
 
-func TestAPILogin_WithRightUsernameAndPassword(test *testing.T) {
+// TestAPILogin_WithRightUsernameAndWrongPassword checks that the login handler reeturns expected JSON when right username but wrong password is passed
+func TestAPILogin_WithRightUsernameAndWrongPassword(test *testing.T) {
 	test.Chdir("..")
 
 	password, hashError := bcrypt.GenerateFromPassword(
