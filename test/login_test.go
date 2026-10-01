@@ -582,7 +582,7 @@ func TestAPILogin_WithRightUsernameAndPassword(test *testing.T) {
 
 }
 
-// TestAPILogin_WithRightUsernameAndPassword checks that the login handler reeturns expected JSON when missing username and password is passed
+// TestAPILogin_WithMissingDatabase checks that the login handler reeturns expected JSON when missing a database
 func TestAPILogin_WithMissingDatabase(test *testing.T) {
 	test.Chdir("..")
 
