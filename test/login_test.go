@@ -72,7 +72,7 @@ func TestAPILogin(test *testing.T) {
 	var actualResponse handlers.AuthResponse
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -154,7 +154,7 @@ func TestAPILogin_WithWrongUsernameAndPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -236,7 +236,7 @@ func TestAPILogin_WithRightUsernameAndWrongPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -318,7 +318,7 @@ func TestAPILogin_WithWrongUsernameAndRightPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -400,7 +400,7 @@ func TestAPILogin_WithMissingUsernameAndRightPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -482,7 +482,7 @@ func TestAPILogin_WithRightUsernameAndMissingPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -569,7 +569,7 @@ func TestAPILogin_WithRightUsernameAndPassword(test *testing.T) {
 	var actualResponse handlers.HTTPValidationError
 	parsingError := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResponse)
 	if parsingError != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
+		test.Fatalf("response was not valid JSON: %v", parsingError)
 	}
 
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -577,6 +577,53 @@ func TestAPILogin_WithRightUsernameAndPassword(test *testing.T) {
 			"expected results %+v, got %+v",
 			expectedResponse,
 			actualResponse,
+		)
+	}
+
+}
+
+// TestAPILogin_WithRightUsernameAndPassword checks that the login handler reeturns expected JSON when missing username and password is passed
+func TestAPILogin_WithMissingDatabase(test *testing.T) {
+	test.Chdir("..")
+
+	test.Cleanup(func() {
+		test.Chdir("./test")
+	})
+
+	expectedContentType := "text/plain; charset=utf-8"
+
+	expectedMessage := "Failed to login user"
+
+	formData := url.Values{}
+	formData.Set("username", "username")
+	formData.Set("password", "password")
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/login",
+		strings.NewReader(formData.Encode()),
+	)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	responseRecorder := httptest.NewRecorder()
+
+	handlers.LoginAPI(responseRecorder, request)
+
+	if responseRecorder.Code != http.StatusInternalServerError {
+		test.Fatalf("expected status %d, got %d", http.StatusInternalServerError, responseRecorder.Code)
+	}
+
+	contentType := responseRecorder.Header().Get("Content-Type")
+	if contentType != expectedContentType {
+		test.Fatalf("expected header %s, got %s", expectedContentType, contentType)
+	}
+
+	actualMessage := responseRecorder.Body.String()
+	if strings.Compare(expectedMessage, actualMessage) == 0 {
+		test.Errorf(
+			"expected results %+v, got %+v",
+			expectedMessage,
+			actualMessage,
 		)
 	}
 
