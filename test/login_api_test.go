@@ -116,7 +116,7 @@ func TestAPILogin_WithWrongUsernameAndPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
@@ -198,7 +198,7 @@ func TestAPILogin_WithRightUsernameAndWrongPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
@@ -280,7 +280,7 @@ func TestAPILogin_WithWrongUsernameAndRightPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
@@ -362,7 +362,7 @@ func TestAPILogin_WithMissingUsernameAndRightPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "username"},
 			Message:  "Username Field required",
 			Type:     "missing",
@@ -444,7 +444,7 @@ func TestAPILogin_WithRightUsernameAndMissingPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "password"},
 			Message:  "Password Field required",
 			Type:     "missing",
@@ -526,12 +526,12 @@ func TestAPILogin_WithRightUsernameAndPassword(test *testing.T) {
 	})
 
 	expectedValidationErrors := []handlers.ValidationError{
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "username"},
 			Message:  "Username Field required",
 			Type:     "missing",
 		},
-		handlers.ValidationError{
+		{
 			Location: []any{"body", "password"},
 			Message:  "Password Field required",
 			Type:     "missing",
