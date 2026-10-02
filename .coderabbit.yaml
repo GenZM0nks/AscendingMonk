@@ -1,0 +1,83 @@
+# CodeRabbit configuration for this project.
+
+language: "en-US"
+
+reviews:
+  # Prefer useful findings over large numbers of minor comments.
+  profile: "chill"
+
+  # CodeRabbit is an additional reviewer. It should not automatically
+  # request changes; the team and our CI quality gates decide whether
+  # a PR can be merged.
+  request_changes_workflow: false
+
+  high_level_summary: true
+  poem: false
+  review_status: true
+
+  # Do not spend review effort on generated/dependency files.
+  path_filters:
+    - "!**/go.sum"
+    - "!**/vendor/**"
+
+  # Project-specific review guidance.
+  path_instructions:
+    - path: "**/*.go"
+      instructions: |
+        This is a small Go web application used for a student DevOps project.
+        It was migrated from an older Python application and is being
+        incrementally extended.
+
+        Focus on correctness and concrete problems rather than stylistic
+        preferences.
+
+        Pay particular attention to:
+        - Incorrect or missing Go error handling.
+        - Nil pointer and resource management problems.
+        - HTTP request and response handling.
+        - Appropriate HTTP status codes.
+        - Input validation and unsafe handling of user input.
+        - Authentication and authorization mistakes.
+        - Security vulnerabilities.
+        - Concurrency problems where relevant.
+        - The ability to handle a growing number of requests from a growing number of users.
+        - Regressions introduced by the change.
+        - Suspicious patterns that may have resulted from translating
+          Python code into Go.
+
+        Encourage idiomatic Go when it improves correctness, readability,
+        or maintainability, but do not nitpick harmless style choices.
+
+        Prefer simple solutions appropriate for a small application.
+        Do not recommend unnecessary abstractions or architectural complexity.
+
+        Check whether significant new behavior has appropriate tests,
+        including important error and edge cases.
+
+        SonarQube and Qlty are also used on this project. Avoid repeating
+        trivial formatting, linting, and static-analysis findings that those
+        tools are expected to catch.
+
+        For each finding, explain the concrete problem or failure scenario
+        and suggest a practical fix.
+
+    - path: "**/*.{yml,yaml}"
+      instructions: |
+        Pay particular attention to CI/CD and configuration changes.
+        Check for hard-coded secrets, unsafe permissions, incorrect
+        environment assumptions, fragile workflows, and configuration
+        that could make builds or deployments non-reproducible.
+
+    - path: "**/Dockerfile"
+      instructions: |
+        Review for reproducible builds, security problems, unnecessary
+        privileges, inefficient image construction, and accidental inclusion
+        of secrets or development files.
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+
+chat:
+  auto_reply: true
