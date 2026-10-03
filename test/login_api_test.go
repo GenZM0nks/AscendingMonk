@@ -85,7 +85,7 @@ func TestAPILogin(test *testing.T) {
 
 }
 
-// TestAPILogin_WithWrongUsernameAndPassword checks that the login handler reeturns expected JSON when wrong user data is passed
+// TestAPILogin_WithWrongUsernameAndPassword checks that the login handler returns expected JSON when wrong user data is passed
 func TestAPILogin_WithWrongUsernameAndPassword(test *testing.T) {
 	test.Chdir("..")
 
