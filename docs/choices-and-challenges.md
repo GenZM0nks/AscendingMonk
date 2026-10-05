@@ -1030,7 +1030,7 @@ No API key                      Authenticated commercial provider
 The alternatives are not necessarily worse. Some would become preferable if the requirements changed. The important part of the decision is therefore not only **what we selected**, but **why that level of complexity matched the current problem** and what conditions would cause us to revisit it.
   
 
-## 04/09/2026
+## 28/09/2026
 ### Description of choice
 Decided to install the following tools for software quality analysis  
 
