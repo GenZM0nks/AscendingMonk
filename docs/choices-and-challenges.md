@@ -1072,7 +1072,20 @@ To improve code quality, get insights about our code and prevent technical debt.
   
 Installing tools for software quality analysis was part of an assignment.  
 To install all of the mentioned tools was a decision made by Janus alone, with the possibility of uninstalling some of them.
+
+## 05/10/2026
+### Description of choice
+We've "chosen" as branching strategy what is most accurately described as a hybrid between Gitflow and GitHub flow. That is, our strategy fits neither perfectly, but is somewhere in between, with fewer branches than git-flow and more than GitHub-flow. Our trunk branches are also named differently.
   
+### Reason for choice
+The strategy wasn't debated too heavily in advance of its use, but rather emerged, inspired by previous experiences and the nature of this course's requirements. Since the project requires documentation, the `docs` trunk branch arose. The same holds for the `feature`, `refactor` and `bugfix` variants. In other words, the trunk branches evolved to respond to requirements arising through the work, rather than being planned in advance, potentially choosing too cumbersome a workflow or one too simple. Our goals, however, more closely align with those for GitHub flow. We want a main branch which is always in a deployable state. Our commit strategy also fits this flow more closely, in that a commit should be the smallest possible complete change, so one can easily revert. On the other hand, a larger number of trunk branches, and having trunk branches in multiple categories, fits Gitflow better.
+
+As of today, the only "problems" we've run into is that we create a lot of branches and that `main` sometimes moves quickly, requiring frequent merging into feature branches, which is not always done. This requires discipline of us in removing them after successful pull requests. "Problems" was quoted earlier since removing branches isn't very difficult or time consuming to do. Neither is merging `main` into another branch. A benefit of this strategy, which is also what causes the number of branches to be high, is that we are allowed flexibility in working in parallel and rarely run into merge conflicts.
+
+Full compliance with the git-workflow would be excessive, in our opinion, because we simply don't need the overhead required in it to accomplish our goals, nor do the names of its trunk branches fit what we are to do. The GitHub-workflow would be too restrictive, in that everything should be a feature, which would not be flexible enough to allow us to accomplish the tasks required in this course. At least not if branch names are to reflect what they contain.
+  
+### How was this decided?
+Plenary discussion online through a draft PR on GitHub. This document will reflect the final result of this.
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
