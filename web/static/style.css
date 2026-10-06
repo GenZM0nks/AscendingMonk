@@ -4,6 +4,16 @@ body {
     font-size: 14px;
 }
 
+div.page {
+    min-height: 97vh;
+    display: flex;
+    flex-direction: column;
+}
+
+div.body {
+    flex: 1;
+}
+
 div.page div.body {
     padding: 10px;
 }
