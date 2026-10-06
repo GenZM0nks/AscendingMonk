@@ -122,7 +122,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Log users out.",
                 "responses": {
@@ -139,12 +139,38 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Fetch query data.",
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/weather": {
+            "get": {
+                "description": "Fetch a seven-day weather forecast for Copenhagen.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Fetch weather forecast.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.StandardResponse"
+                        }
                     },
                     "500": {
                         "description": "error",
@@ -273,32 +299,6 @@ const docTemplate = `{
                         "description": "Unprocessable Entity",
                         "schema": {
                             "$ref": "#/definitions/handlers.HTTPValidationError"
-                        }
-                    }
-                }
-            }
-        },
-        "/weather": {
-            "get": {
-                "description": "Fetch a seven-day weather forecast for Copenhagen.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "API"
-                ],
-                "summary": "Fetch weather forecast.",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.StandardResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "error",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 }

@@ -139,7 +139,7 @@ paths:
           description: OK
       summary: Log users out.
       tags:
-      - Pages
+      - API
   /api/search:
     get:
       description: Fetch query data from the database.
@@ -154,7 +154,24 @@ paths:
             type: string
       summary: Fetch query data.
       tags:
-      - Pages
+      - API
+  /api/weather:
+    get:
+      description: Fetch a seven-day weather forecast for Copenhagen.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.StandardResponse'
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Fetch weather forecast.
+      tags:
+      - API
   /login:
     get:
       description: Render the Login template to show in the browser.
@@ -236,23 +253,6 @@ paths:
           schema:
             $ref: '#/definitions/handlers.HTTPValidationError'
       summary: Register a new user
-      tags:
-      - API
-  /weather:
-    get:
-      description: Fetch a seven-day weather forecast for Copenhagen.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/handlers.StandardResponse'
-        "500":
-          description: error
-          schema:
-            type: string
-      summary: Fetch weather forecast.
       tags:
       - API
 swagger: "2.0"

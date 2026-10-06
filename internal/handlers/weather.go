@@ -147,7 +147,7 @@ func fetchWeatherDataFromAPI() (WeatherData, error) {
 // @Success 200 {object} StandardResponse
 // @Failure 500 {string} string "error"
 // @Tags API
-// @Router /weather [get]
+// @Router /api/weather [get]
 func APIWeather(responseWriter http.ResponseWriter, _ *http.Request) {
 	weatherData, err := fetchWeatherData()
 	if err != nil {
