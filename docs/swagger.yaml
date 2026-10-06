@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /
 definitions:
   handlers.AuthResponse:
     properties:
@@ -55,7 +55,7 @@ definitions:
       windSpeedMaximum:
         type: number
     type: object
-host: localhost:8080
+host: 20.251.205.81:8080
 info:
   contact:
     email: apisupport@genzmonks.com

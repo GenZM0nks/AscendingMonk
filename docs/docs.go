@@ -397,8 +397,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/api",
+	Host:             "20.251.205.81:8080",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "AscendingMonkAPI",
 	Description:      "This is a Go rewrite of whoknows.",

@@ -15,8 +15,8 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/api",
+    "host": "20.251.205.81:8080",
+    "basePath": "/",
     "paths": {
         "/": {
             "get": {

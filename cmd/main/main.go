@@ -21,8 +21,8 @@ import (
 // @license.name  Apache 2.0
 // @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      localhost:8080
-// @BasePath  /api
+// @host      20.251.205.81:8080
+// @BasePath  /
 func main() {
 	router := http.NewServeMux()
 
