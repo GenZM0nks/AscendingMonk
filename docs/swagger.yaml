@@ -140,6 +140,45 @@ paths:
       summary: Log users out.
       tags:
       - API
+  /api/register:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Register a new user account
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Password confirmation
+        in: formData
+        name: password2
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.HTTPValidationError'
+      summary: Register a new user
+      tags:
+      - API
   /api/search:
     get:
       description: Fetch query data from the database.
@@ -217,42 +256,20 @@ paths:
       summary: Show register.html
       tags:
       - Pages
-    post:
-      consumes:
-      - application/x-www-form-urlencoded
-      description: Register a new user account
-      parameters:
-      - description: Username
-        in: formData
-        name: username
-        required: true
-        type: string
-      - description: Email
-        in: formData
-        name: email
-        required: true
-        type: string
-      - description: Password
-        in: formData
-        name: password
-        required: true
-        type: string
-      - description: Password confirmation
-        in: formData
-        name: password2
-        type: string
+  /weather:
+    get:
+      description: Render the Weather template with a seven-day weather forecast for
+        Copenhagen.
       produces:
-      - application/json
+      - text/html
       responses:
         "200":
           description: OK
+        "500":
+          description: Failed to fetch weather forecast
           schema:
-            $ref: '#/definitions/handlers.AuthResponse'
-        "422":
-          description: Unprocessable Entity
-          schema:
-            $ref: '#/definitions/handlers.HTTPValidationError'
-      summary: Register a new user
+            type: string
+      summary: Show weather.html
       tags:
-      - API
+      - Pages
 swagger: "2.0"
