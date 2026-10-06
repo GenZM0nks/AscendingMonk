@@ -115,27 +115,53 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Summary Fetch query data.
 // @Description Fetch query data from the database.
 // @Produce json
+// @Param q query string true "Search query"
 // @Success 200
-// @Failure 500 {string} string "error"
-// @Tags Pages
+// @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Entity"
+// @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query().Get("q")
 	language := request.URL.Query().Get("language")
 	searchResults, err := fetchSearchResults(query, language)
 
+	responseWriter.Header().Set("Content-Type", "application/json")
+
 	if err != nil {
-		responseWriter.Write(fmt.Appendln(nil, "Error reading search results from database: %w\n", err.Error()))
+		responseWriter.WriteHeader(422)
+		_error := ErrorWithMessageAndStatusCode{422, fmt.Sprintf("Error reading search results from database: %s\n", err.Error())}
+		_errorAsJSON, err := json.Marshal(_error)
+
+		if err != nil {
+			responseWriter.WriteHeader(500)
+			responseWriter.Write(fmt.Appendf(nil, "Failed to read results from database, then failed to convert error to JSON: %s\n", err.Error()))
+		}
+
+		responseWriter.Write(_errorAsJSON)
 		return
 	}
 
-	responseWriter.Header().Set("Content-Type", "application/json")
 	searchResultsJSON, err := json.Marshal(searchResults)
 
 	if err != nil {
-		responseWriter.Write(fmt.Appendln(nil, "Error converting search results to JSON: %w\n", err.Error()))
+		responseWriter.WriteHeader(422)
+		_error := ErrorWithMessageAndStatusCode{422, fmt.Sprintf("Error converting search results to JSON: %s\n", err.Error())}
+		_errorAsJSON, err := json.Marshal(_error)
+
+		if err != nil {
+			responseWriter.WriteHeader(500)
+			responseWriter.Write(fmt.Appendf(nil, "Failed to convert search results to JSON, then failed to convert error to JSON: %s\n", err.Error()))
+		}
+
+		responseWriter.Write(_errorAsJSON)
 		return
 	}
 
 	responseWriter.Write(searchResultsJSON)
+}
+
+// ErrorWithMessageAndStatusCode is a base struct for HTTP errors.
+type ErrorWithMessageAndStatusCode struct {
+	StatusCode int
+	Message    string
 }

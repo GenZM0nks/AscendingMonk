@@ -7,6 +7,13 @@ definitions:
       statusCode:
         type: integer
     type: object
+  handlers.ErrorWithMessageAndStatusCode:
+    properties:
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
   handlers.HTTPValidationError:
     properties:
       detail:
@@ -143,18 +150,24 @@ paths:
   /api/search:
     get:
       description: Fetch query data from the database.
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
-        "500":
-          description: error
+        "422":
+          description: Unprocessable Entity
           schema:
-            type: string
+            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
       summary: Fetch query data.
       tags:
-      - Pages
+      - API
   /login:
     get:
       description: Render the Login template to show in the browser.

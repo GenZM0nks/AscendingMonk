@@ -139,17 +139,26 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Fetch query data.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK"
                     },
-                    "500": {
-                        "description": "error",
+                    "422": {
+                        "description": "Unprocessable Entity",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.ErrorWithMessageAndStatusCode"
                         }
                     }
                 }
@@ -307,6 +316,17 @@ const docTemplate = `{
     },
     "definitions": {
         "handlers.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.ErrorWithMessageAndStatusCode": {
             "type": "object",
             "properties": {
                 "message": {
