@@ -147,7 +147,7 @@ func fetchWeatherDataFromAPI() (WeatherData, error) {
 // @Success 200 {object} StandardResponse
 // @Failure 500 {string} string "error"
 // @Tags API
-// @Router /weather [get]
+// @Router /api/weather [get]
 func APIWeather(responseWriter http.ResponseWriter, _ *http.Request) {
 	weatherData, err := fetchWeatherData()
 	if err != nil {
@@ -262,6 +262,14 @@ func windDirection(degrees int) string {
 }
 
 // Weather renders the weather forecast page.
+//
+// @Summary Show weather.html
+// @Description Render the Weather template with a seven-day weather forecast for Copenhagen.
+// @Produce html
+// @Success 200
+// @Failure 500 {string} string "Failed to fetch weather forecast"
+// @Tags Pages
+// @Router /weather [get]
 func Weather(responseWriter http.ResponseWriter, _ *http.Request) {
 	weatherData, err := fetchWeatherData()
 	if err != nil {
