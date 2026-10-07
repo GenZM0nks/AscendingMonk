@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -118,6 +119,7 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Param language query string false "Two-letter language string like 'en' for English, the default option."
 // @Success 200 {array} SearchResult "A collection of search results relevant to the query"
 // @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Entity"
+// @Failure 400 {object} ErrorWithMessageAndStatusCode "Client Error - missing query parameter 'q'"
 // @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
@@ -125,7 +127,8 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	responseWriter.Header().Set("Content-Type", "application/json")
 
 	if query == "" {
-		writeJSONError(responseWriter, "Required query parameter 'q' not given.", nil, 400)
+		writeJSONError(responseWriter, "Required query parameter 'q' not given.", errors.New(""), 400)
+		return
 	}
 
 	language := request.URL.Query().Get("language")
@@ -133,12 +136,14 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 
 	if err != nil {
 		writeJSONError(responseWriter, "Error reading search results from database: %s\n", err, 422)
+		return
 	}
 
 	searchResultsJSON, err := json.Marshal(searchResults)
 
 	if err != nil {
 		writeJSONError(responseWriter, "Error converting search results to JSON: %s\n", err, 422)
+		return
 	}
 
 	responseWriter.Write(searchResultsJSON)
@@ -160,6 +165,6 @@ func writeJSONError(responseWriter http.ResponseWriter, errorFormatString string
 
 // ErrorWithMessageAndStatusCode is a base struct for HTTP errors.
 type ErrorWithMessageAndStatusCode struct {
-	StatusCode int
-	Message    string
+	StatusCode int    `json:"statusCode"`
+	Message    string `json:"message"`
 }
