@@ -161,6 +161,12 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Client Error - missing query parameter 'q'",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorWithMessageAndStatusCode"
+                        }
+                    },
                     "422": {
                         "description": "Unprocessable Entity",
                         "schema": {
