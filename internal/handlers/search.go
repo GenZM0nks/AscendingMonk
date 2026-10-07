@@ -118,8 +118,8 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Param q query string true "Search query"
 // @Param language query string false "Two-letter language string like 'en' for English, the default option."
 // @Success 200 {object} SearchResultDataWrapper "A collection of search results relevant to the query"
-// @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Entity"
-// @Failure 400 {object} ErrorWithMessageAndStatusCode "Client Error - missing query parameter 'q'"
+// @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Content - missing query parameter 'q'"
+// @Failure 500 {object} ErrorWithMessageAndStatusCode "Internal Server Error - either database failure or JSON marshalling"
 // @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
@@ -127,7 +127,7 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	responseWriter.Header().Set("Content-Type", "application/json")
 
 	if query == "" {
-		writeJSONError(responseWriter, "%s.\n", errors.New("required query parameter 'q' not given"), 400)
+		writeJSONError(responseWriter, "%s.\n", errors.New("required query parameter 'q' not given"), 422)
 		return
 	}
 
@@ -135,7 +135,7 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	searchResults, err := fetchSearchResults(query, language)
 
 	if err != nil {
-		writeJSONError(responseWriter, "Error reading search results from database: %s\n", err, 422)
+		writeJSONError(responseWriter, "Error reading search results from database: %s\n", err, 500)
 		return
 	}
 
@@ -143,7 +143,7 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	searchResultsJSON, err := json.Marshal(data)
 
 	if err != nil {
-		writeJSONError(responseWriter, "Error converting search results to JSON: %s\n", err, 422)
+		writeJSONError(responseWriter, "Error converting search results to JSON: %s\n", err, 500)
 		return
 	}
 

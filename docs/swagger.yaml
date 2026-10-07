@@ -184,12 +184,12 @@ paths:
           description: A collection of search results relevant to the query
           schema:
             $ref: '#/definitions/handlers.SearchResultDataWrapper'
-        "400":
-          description: Client Error - missing query parameter 'q'
+        "422":
+          description: Unprocessable Content - missing query parameter 'q'
           schema:
             $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
-        "422":
-          description: Unprocessable Entity
+        "500":
+          description: Internal Server Error - either database failure or JSON marshalling
           schema:
             $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
       summary: Fetch query data.
