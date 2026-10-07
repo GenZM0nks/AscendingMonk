@@ -161,10 +161,7 @@ const docTemplate = `{
                     "200": {
                         "description": "A collection of search results relevant to the query",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handlers.SearchResult"
-                            }
+                            "$ref": "#/definitions/handlers.SearchResultDataWrapper"
                         }
                     },
                     "400": {
@@ -377,6 +374,17 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "handlers.SearchResultDataWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.SearchResult"
+                    }
                 }
             }
         },

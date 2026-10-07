@@ -117,7 +117,7 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Produce json
 // @Param q query string true "Search query"
 // @Param language query string false "Two-letter language string like 'en' for English, the default option."
-// @Success 200 {array} SearchResult "A collection of search results relevant to the query"
+// @Success 200 {object} SearchResultDataWrapper "A collection of search results relevant to the query"
 // @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Entity"
 // @Failure 400 {object} ErrorWithMessageAndStatusCode "Client Error - missing query parameter 'q'"
 // @Tags API
@@ -139,7 +139,8 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	searchResultsJSON, err := json.Marshal(searchResults)
+	data := SearchResultDataWrapper{Data: searchResults}
+	searchResultsJSON, err := json.Marshal(data)
 
 	if err != nil {
 		writeJSONError(responseWriter, "Error converting search results to JSON: %s\n", err, 422)

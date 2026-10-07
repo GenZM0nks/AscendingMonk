@@ -30,6 +30,13 @@ definitions:
       url:
         type: string
     type: object
+  handlers.SearchResultDataWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.SearchResult'
+        type: array
+    type: object
   handlers.StandardResponse:
     properties:
       data:
@@ -176,9 +183,7 @@ paths:
         "200":
           description: A collection of search results relevant to the query
           schema:
-            items:
-              $ref: '#/definitions/handlers.SearchResult'
-            type: array
+            $ref: '#/definitions/handlers.SearchResultDataWrapper'
         "400":
           description: Client Error - missing query parameter 'q'
           schema:

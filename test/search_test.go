@@ -65,12 +65,15 @@ func TestAPISearch(test *testing.T) {
 		database.Close()
 	})
 
-	expectedResults := []handlers.SearchResult{
-		{
-			Title:       "Fortran",
-			URL:         "https://en.wikipedia.org/wiki/Fortran",
-			Description: "Fortran is a general-purpose, compiled imperative programming language.",
-		},
+	data := make([]handlers.SearchResult, 0)
+	data = append(data, handlers.SearchResult{
+		Title:       "Fortran",
+		URL:         "https://en.wikipedia.org/wiki/Fortran",
+		Description: "Fortran is a general-purpose, compiled imperative programming language.",
+	})
+
+	expectedResults := handlers.SearchResultDataWrapper{
+		Data: data,
 	}
 
 	request := httptest.NewRequest(
@@ -87,7 +90,7 @@ func TestAPISearch(test *testing.T) {
 		test.Fatalf("expected status %d, got %d", http.StatusOK, responseRecorder.Code)
 	}
 
-	var actualResults []handlers.SearchResult
+	var actualResults handlers.SearchResultDataWrapper
 	if err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResults); err != nil {
 		test.Fatalf("response was not valid JSON: %v", err)
 	}
