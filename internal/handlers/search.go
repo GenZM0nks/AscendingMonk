@@ -127,7 +127,7 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	responseWriter.Header().Set("Content-Type", "application/json")
 
 	if query == "" {
-		writeJSONError(responseWriter, "Required query parameter 'q' not given.", errors.New(""), 400)
+		writeJSONError(responseWriter, "%s.\n", errors.New("required query parameter 'q' not given"), 400)
 		return
 	}
 
