@@ -25,7 +25,9 @@ func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 		errorAsJSON, err := json.Marshal(HTTPResponse{fmt.Sprintf("Error converting logout message to JSON: %s", err), 500})
 
 		if err != nil {
-			json.Marshal("Failed to convert error message into an HTTPResponse.")
+			marshallingErr, _ := json.Marshal("Failed to convert error message into an HTTPResponse.")
+			responseWriter.Write(marshallingErr)
+			return
 		}
 
 		responseWriter.Write(errorAsJSON)
