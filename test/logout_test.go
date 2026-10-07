@@ -30,7 +30,7 @@ func TestAPILogout(test *testing.T) {
 		database.Close()
 	})
 
-	expectedResult := "You were logged out"
+	expectedResult := handlers.HTTPResponse{"You were logged out", 200}
 
 	request := httptest.NewRequest(
 		http.MethodGet,
@@ -46,7 +46,7 @@ func TestAPILogout(test *testing.T) {
 		test.Fatalf("expected status %d, got %d", http.StatusOK, responseRecorder.Code)
 	}
 
-	var actualResults string
+	var actualResults handlers.HTTPResponse
 	if err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResults); err != nil {
 		test.Fatalf("response was not valid JSON: %v", err)
 	}
