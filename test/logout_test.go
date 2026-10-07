@@ -30,7 +30,7 @@ func TestAPILogout(test *testing.T) {
 		database.Close()
 	})
 
-	expectedResult := handlers.HTTPResponse{"You were logged out", 200}
+	expectedResult := handlers.HTTPResponse{Message: "You were logged out", StatusCode: 200}
 
 	request := httptest.NewRequest(
 		http.MethodGet,
