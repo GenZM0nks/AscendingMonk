@@ -122,12 +122,21 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Log users out.",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Status code and message",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error on marshalling 'You were logged out' into JSON",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPResponse"
+                        }
                     }
                 }
             }
@@ -307,6 +316,17 @@ const docTemplate = `{
     },
     "definitions": {
         "handlers.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.HTTPResponse": {
             "type": "object",
             "properties": {
                 "message": {

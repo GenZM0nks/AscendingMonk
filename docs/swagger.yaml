@@ -7,6 +7,13 @@ definitions:
       statusCode:
         type: integer
     type: object
+  handlers.HTTPResponse:
+    properties:
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
   handlers.HTTPValidationError:
     properties:
       detail:
@@ -136,10 +143,16 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Status code and message
+          schema:
+            $ref: '#/definitions/handlers.HTTPResponse'
+        "500":
+          description: Error on marshalling 'You were logged out' into JSON
+          schema:
+            $ref: '#/definitions/handlers.HTTPResponse'
       summary: Log users out.
       tags:
-      - Pages
+      - API
   /api/search:
     get:
       description: Fetch query data from the database.

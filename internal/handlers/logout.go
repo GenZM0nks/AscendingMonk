@@ -13,14 +13,23 @@ import (
 // @Summary Log users out.
 // @Description Log users out and delete their session data.
 // @Produce json
-// @Success 200
-// @Tags Pages
+// @Success 200 {object} HTTPResponse "Status code and message"
+// @Failure 500 {object} HTTPResponse "Error on marshalling 'You were logged out' into JSON"
+// @Tags API
 // @Router /api/logout [get]
 func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
-	searchResultsJSON, err := json.Marshal("You were logged out")
+	logoutJSON, err := json.Marshal(HTTPResponse{"You were logged out", 200})
 
 	if err != nil {
-		responseWriter.Write(fmt.Appendln(nil, "Error converting search results to JSON: %w\n", err.Error()))
+		responseWriter.WriteHeader(500)
+		errorAsJSON, err := json.Marshal(HTTPResponse{fmt.Sprintf("Error converting logout message to JSON: %s", err), 500})
+
+		if err != nil {
+			json.Marshal("Failed to convert error message into an HTTPResponse.")
+		}
+
+		responseWriter.Write(errorAsJSON)
+		return
 	}
 
 	token, err := request.Cookie("session_token") // Currently ignores if there's no token
@@ -29,5 +38,11 @@ func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	responseWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
-	responseWriter.Write(searchResultsJSON)
+	responseWriter.Write(logoutJSON)
+}
+
+// HTTPResponse models an HTTP response with a status code and a message
+type HTTPResponse struct {
+	Message    string `json:"message"`
+	StatusCode int    `json:"statusCode"`
 }
