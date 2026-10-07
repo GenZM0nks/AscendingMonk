@@ -7,12 +7,28 @@ definitions:
       statusCode:
         type: integer
     type: object
+  handlers.ErrorWithMessageAndStatusCode:
+    properties:
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
   handlers.HTTPValidationError:
     properties:
       detail:
         items:
           $ref: '#/definitions/handlers.ValidationError'
         type: array
+    type: object
+  handlers.SearchResult:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
     type: object
   handlers.StandardResponse:
     properties:
@@ -143,18 +159,33 @@ paths:
   /api/search:
     get:
       description: Fetch query data from the database.
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Two-letter language string like 'en' for English, the default
+          option.
+        in: query
+        name: language
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
-        "500":
-          description: error
+          description: A collection of search results relevant to the query
           schema:
-            type: string
+            items:
+              $ref: '#/definitions/handlers.SearchResult'
+            type: array
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
       summary: Fetch query data.
       tags:
-      - Pages
+      - API
   /login:
     get:
       description: Render the Login template to show in the browser.

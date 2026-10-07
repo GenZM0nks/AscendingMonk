@@ -139,17 +139,38 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Fetch query data.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Two-letter language string like 'en' for English, the default option.",
+                        "name": "language",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
-                    },
-                    "500": {
-                        "description": "error",
+                        "description": "A collection of search results relevant to the query",
                         "schema": {
-                            "type": "string"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.SearchResult"
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorWithMessageAndStatusCode"
                         }
                     }
                 }
@@ -317,6 +338,17 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.ErrorWithMessageAndStatusCode": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "statusCode": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.HTTPValidationError": {
             "type": "object",
             "properties": {
@@ -325,6 +357,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/handlers.ValidationError"
                     }
+                }
+            }
+        },
+        "handlers.SearchResult": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },
