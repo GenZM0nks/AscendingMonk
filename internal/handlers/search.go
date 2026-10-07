@@ -117,7 +117,7 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Produce json
 // @Success 200
 // @Failure 500 {string} string "error"
-// @Tags Pages
+// @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query().Get("q")
