@@ -11,8 +11,8 @@
 7. When sending a request to `/api/register` with a unique username but an email that is not unique, the server returns an internal server error 500, which does not follow the OpenAPI specification.
 8. The variable `one` in `query_db()` is confusing. Its usage indicates that a more helpful name could be `return_only_first_row`
 9. In addition, *cur* could possibly be called `response`, and `rv` could be called `row`, in `query_db()`.
-- `q` in `search()` is also a confusing variable name. Does it mean (SQL) query or a question from the user?
-- `get_user_id()` should be named something like `get_user_id_for_username()`.
+  - `q` in `search()` is also a confusing variable name. Does it mean (SQL) query or a question from the user?
+  - `get_user_id()` should be named something like `get_user_id_for_username()`.
 10. Tests are generally weak.
 11. Dependency pinning in `requirements.txt` is outdated.
 12. A `</li>` tag is missing in `layout.html`.
