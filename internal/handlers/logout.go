@@ -14,7 +14,7 @@ import (
 // @Description Log users out and delete their session data.
 // @Produce json
 // @Success 200
-// @Tags Pages
+// @Tags API
 // @Router /api/logout [get]
 func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 	searchResultsJSON, err := json.Marshal("You were logged out")
