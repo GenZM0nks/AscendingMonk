@@ -1,12 +1,12 @@
 # Problems with the Source Code (Ranked)
 
-1. Secret uploaded in the source code `*SECRET_KEY*`
+1. Secret uploaded in the source code `SECRET_KEY`
 2. Secret uploaded in `schema.sql` — contains an `INSERT` showing the admin password.
 3. SQL injection is possible because user input is inserted directly into SQL statements, for example:
    - `login, register, api/search`
    - Parameterized queries are more secure.
 4. Passwords are hashed with MD5 and without salt. Use stronger hashing instead and combine it with salt.
-5. Empty test `search()*`
+5. Empty test `search()`
 6. When sending a request to `/api/login` with a correct username but an incorrect password, the server responds that the password is invalid. This leaks to the client that a user with the given username exists, which can make it easier to gain access to other users' accounts.
 7. When sending a request to `/api/register` with a unique username but an email that is not unique, the server returns an internal server error 500, which does not follow the OpenAPI specification.
 8. The variable `one` in `query_db()` is confusing. Its usage indicates that a more helpful name could be `return_only_first_row`
