@@ -118,8 +118,8 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 // @Param q query string true "Search query"
 // @Param language query string false "Two-letter language string like 'en' for English, the default option."
 // @Success 200 {object} SearchResultDataWrapper "A collection of search results relevant to the query"
-// @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Content - missing query parameter 'q'"
-// @Failure 500 {object} ErrorWithMessageAndStatusCode "Internal Server Error - either database failure or JSON marshalling"
+// @Failure 422 {object} HTTPResponse "Unprocessable Content - missing query parameter 'q'"
+// @Failure 500 {object} HTTPResponse "Internal Server Error - either database failure or JSON marshalling"
 // @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
@@ -152,7 +152,7 @@ func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 
 func writeJSONError(responseWriter http.ResponseWriter, errorFormatString string, err error, statusCode int) {
 	responseWriter.WriteHeader(statusCode)
-	_error := ErrorWithMessageAndStatusCode{statusCode, fmt.Sprintf(errorFormatString, err.Error())}
+	_error := HTTPResponse{StatusCode: statusCode, Message: fmt.Sprintf(errorFormatString, err.Error())}
 	_errorAsJSON, err := json.Marshal(_error)
 
 	if err != nil {
@@ -162,10 +162,4 @@ func writeJSONError(responseWriter http.ResponseWriter, errorFormatString string
 	}
 
 	responseWriter.Write(_errorAsJSON)
-}
-
-// ErrorWithMessageAndStatusCode is a base struct for HTTP errors.
-type ErrorWithMessageAndStatusCode struct {
-	StatusCode int    `json:"statusCode"`
-	Message    string `json:"message"`
 }

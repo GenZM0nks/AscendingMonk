@@ -7,7 +7,7 @@ definitions:
       statusCode:
         type: integer
     type: object
-  handlers.ErrorWithMessageAndStatusCode:
+  handlers.HTTPResponse:
     properties:
       message:
         type: string
@@ -159,7 +159,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Status code and message
+          schema:
+            $ref: '#/definitions/handlers.HTTPResponse'
+        "500":
+          description: Error on marshalling 'You were logged out' into JSON
+          schema:
+            $ref: '#/definitions/handlers.HTTPResponse'
       summary: Log users out.
       tags:
       - API
@@ -226,11 +232,11 @@ paths:
         "422":
           description: Unprocessable Content - missing query parameter 'q'
           schema:
-            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
+            $ref: '#/definitions/handlers.HTTPResponse'
         "500":
           description: Internal Server Error - either database failure or JSON marshalling
           schema:
-            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
+            $ref: '#/definitions/handlers.HTTPResponse'
       summary: Fetch query data.
       tags:
       - API
@@ -250,7 +256,6 @@ paths:
             type: string
       summary: Fetch weather forecast.
       tags:
-      - API
       - API
   /login:
     get:

@@ -127,7 +127,16 @@ const docTemplate = `{
                 "summary": "Log users out.",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Status code and message",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error on marshalling 'You were logged out' into JSON",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPResponse"
+                        }
                     }
                 }
             }
@@ -225,13 +234,13 @@ const docTemplate = `{
                     "422": {
                         "description": "Unprocessable Content - missing query parameter 'q'",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorWithMessageAndStatusCode"
+                            "$ref": "#/definitions/handlers.HTTPResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error - either database failure or JSON marshalling",
                         "schema": {
-                            "$ref": "#/definitions/handlers.ErrorWithMessageAndStatusCode"
+                            "$ref": "#/definitions/handlers.HTTPResponse"
                         }
                     }
                 }
@@ -366,7 +375,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.ErrorWithMessageAndStatusCode": {
+        "handlers.HTTPResponse": {
             "type": "object",
             "properties": {
                 "message": {
