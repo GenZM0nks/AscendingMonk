@@ -141,6 +141,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/register": {
+            "post": {
+                "description": "Register a new user account",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password",
+                        "name": "password",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Password confirmation",
+                        "name": "password2",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AuthResponse"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPValidationError"
+                        }
+                    }
+                }
+            }
+        },
         "/api/search": {
             "get": {
                 "description": "Fetch query data from the database.",
@@ -148,12 +206,38 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Pages"
+                    "API"
                 ],
                 "summary": "Fetch query data.",
                 "responses": {
                     "200": {
                         "description": "OK"
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/weather": {
+            "get": {
+                "description": "Fetch a seven-day weather forecast for Copenhagen.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API"
+                ],
+                "summary": "Fetch weather forecast.",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.StandardResponse"
+                        }
                     },
                     "500": {
                         "description": "error",
@@ -229,83 +313,24 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "description": "Register a new user account",
-                "consumes": [
-                    "application/x-www-form-urlencoded"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "API"
-                ],
-                "summary": "Register a new user",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Username",
-                        "name": "username",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Email",
-                        "name": "email",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password",
-                        "name": "password",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Password confirmation",
-                        "name": "password2",
-                        "in": "formData"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.AuthResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Unprocessable Entity",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.HTTPValidationError"
-                        }
-                    }
-                }
             }
         },
         "/weather": {
             "get": {
-                "description": "Fetch a seven-day weather forecast for Copenhagen.",
+                "description": "Render the Weather template with a seven-day weather forecast for Copenhagen.",
                 "produces": [
-                    "application/json"
+                    "text/html"
                 ],
                 "tags": [
-                    "API"
+                    "Pages"
                 ],
-                "summary": "Fetch weather forecast.",
+                "summary": "Show weather.html",
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handlers.StandardResponse"
-                        }
+                        "description": "OK"
                     },
                     "500": {
-                        "description": "error",
+                        "description": "Failed to fetch weather forecast",
                         "schema": {
                             "type": "string"
                         }
@@ -417,8 +442,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/api",
+	Host:             "20.251.205.81:8080",
+	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "AscendingMonkAPI",
 	Description:      "This is a Go rewrite of whoknows.",

@@ -36,7 +36,7 @@ type AuthResponse struct {
 // @Success 200 {object} AuthResponse
 // @Failure 422 {object} HTTPValidationError
 // @Tags API
-// @Router /register [post]
+// @Router /api/register [post]
 func RegisterAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	requestError := request.ParseForm()
 
