@@ -209,14 +209,38 @@ const docTemplate = `{
                     "API"
                 ],
                 "summary": "Fetch query data.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Two-letter language string like 'en' for English, the default option.",
+                        "name": "language",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "A collection of search results relevant to the query",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SearchResultDataWrapper"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Content - missing query parameter 'q'",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.HTTPResponse"
+                        }
                     },
                     "500": {
-                        "description": "error",
+                        "description": "Internal Server Error - either database failure or JSON marshalling",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/handlers.HTTPResponse"
                         }
                     }
                 }
@@ -369,6 +393,31 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/handlers.ValidationError"
+                    }
+                }
+            }
+        },
+        "handlers.SearchResult": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SearchResultDataWrapper": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.SearchResult"
                     }
                 }
             }

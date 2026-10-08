@@ -13,3 +13,8 @@ type SearchResult struct {
 	Description string
 	URL         string
 }
+
+// SearchResultDataWrapper is a struct added only to make the OpenAPI spec. conform with the legacy one.
+type SearchResultDataWrapper struct {
+	Data []SearchResult `json:"data"`
+}
