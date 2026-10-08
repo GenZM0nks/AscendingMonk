@@ -7,11 +7,34 @@ definitions:
       statusCode:
         type: integer
     type: object
+  handlers.ErrorWithMessageAndStatusCode:
+    properties:
+      message:
+        type: string
+      statusCode:
+        type: integer
+    type: object
   handlers.HTTPValidationError:
     properties:
       detail:
         items:
           $ref: '#/definitions/handlers.ValidationError'
+        type: array
+    type: object
+  handlers.SearchResult:
+    properties:
+      description:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+  handlers.SearchResultDataWrapper:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.SearchResult'
         type: array
     type: object
   handlers.StandardResponse:
@@ -182,15 +205,32 @@ paths:
   /api/search:
     get:
       description: Fetch query data from the database.
+      parameters:
+      - description: Search query
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: Two-letter language string like 'en' for English, the default
+          option.
+        in: query
+        name: language
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: OK
-        "500":
-          description: error
+          description: A collection of search results relevant to the query
           schema:
-            type: string
+            $ref: '#/definitions/handlers.SearchResultDataWrapper'
+        "422":
+          description: Unprocessable Content - missing query parameter 'q'
+          schema:
+            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
+        "500":
+          description: Internal Server Error - either database failure or JSON marshalling
+          schema:
+            $ref: '#/definitions/handlers.ErrorWithMessageAndStatusCode'
       summary: Fetch query data.
       tags:
       - API
@@ -210,6 +250,7 @@ paths:
             type: string
       summary: Fetch weather forecast.
       tags:
+      - API
       - API
   /login:
     get:

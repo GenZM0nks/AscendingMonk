@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -111,31 +112,60 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 }
 
 // APISearch handles the rendering of the search template on /search.
-//
 // @Summary Fetch query data.
 // @Description Fetch query data from the database.
 // @Produce json
-// @Success 200
-// @Failure 500 {string} string "error"
+// @Param q query string true "Search query"
+// @Param language query string false "Two-letter language string like 'en' for English, the default option."
+// @Success 200 {object} SearchResultDataWrapper "A collection of search results relevant to the query"
+// @Failure 422 {object} ErrorWithMessageAndStatusCode "Unprocessable Content - missing query parameter 'q'"
+// @Failure 500 {object} ErrorWithMessageAndStatusCode "Internal Server Error - either database failure or JSON marshalling"
 // @Tags API
 // @Router /api/search [get]
 func APISearch(responseWriter http.ResponseWriter, request *http.Request) {
 	query := request.URL.Query().Get("q")
+	responseWriter.Header().Set("Content-Type", "application/json")
+
+	if query == "" {
+		writeJSONError(responseWriter, "%s.\n", errors.New("required query parameter 'q' not given"), 422)
+		return
+	}
+
 	language := request.URL.Query().Get("language")
 	searchResults, err := fetchSearchResults(query, language)
 
 	if err != nil {
-		responseWriter.Write(fmt.Appendln(nil, "Error reading search results from database: %w\n", err.Error()))
+		writeJSONError(responseWriter, "Error reading search results from database: %s\n", err, 500)
 		return
 	}
 
-	responseWriter.Header().Set("Content-Type", "application/json")
-	searchResultsJSON, err := json.Marshal(searchResults)
+	data := SearchResultDataWrapper{Data: searchResults}
+	searchResultsJSON, err := json.Marshal(data)
 
 	if err != nil {
-		responseWriter.Write(fmt.Appendln(nil, "Error converting search results to JSON: %w\n", err.Error()))
+		writeJSONError(responseWriter, "Error converting search results to JSON: %s\n", err, 500)
 		return
 	}
 
 	responseWriter.Write(searchResultsJSON)
+}
+
+func writeJSONError(responseWriter http.ResponseWriter, errorFormatString string, err error, statusCode int) {
+	responseWriter.WriteHeader(statusCode)
+	_error := ErrorWithMessageAndStatusCode{statusCode, fmt.Sprintf(errorFormatString, err.Error())}
+	_errorAsJSON, err := json.Marshal(_error)
+
+	if err != nil {
+		responseWriter.WriteHeader(500)
+		responseWriter.Write(fmt.Appendf(nil, "Got error, then failed to convert error to JSON: %s\n", err.Error()))
+		return
+	}
+
+	responseWriter.Write(_errorAsJSON)
+}
+
+// ErrorWithMessageAndStatusCode is a base struct for HTTP errors.
+type ErrorWithMessageAndStatusCode struct {
+	StatusCode int    `json:"statusCode"`
+	Message    string `json:"message"`
 }
