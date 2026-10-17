@@ -1,0 +1,25 @@
+services:
+  ascendingmonk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ascendingmonk:local
+    environment:
+      DB_PATH: /data/ascendingmonk.db
+    volumes:
+      - ascendingmonk-local-data:/data
+    expose:
+      - "8080"
+
+  nginx:
+    build:
+      context: ./network
+      dockerfile: Dockerfile
+    image: ascendingmonk-nginx:local
+    ports:
+      - "8080:80"
+    depends_on:
+      - ascendingmonk
+
+volumes:
+  ascendingmonk-local-data:
