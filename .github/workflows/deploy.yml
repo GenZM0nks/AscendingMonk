@@ -73,6 +73,30 @@ jobs:
             docker buildx imagetools inspect "$image:sha-$IMAGE_SHA"
           done
 
+      - name: Reject outdated automatic release
+        if: github.event_name == 'workflow_run'
+        env:
+          IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          CURRENT_MAIN_SHA="$(
+            gh api "repos/$GH_REPOSITORY/git/ref/heads/main" \
+              --jq '.object.sha'
+          )"
+
+          echo "Current main SHA: $CURRENT_MAIN_SHA"
+          echo "Selected release SHA: $IMAGE_SHA"
+
+          if [ "$IMAGE_SHA" != "$CURRENT_MAIN_SHA" ]; then
+            echo "::error::Automatic deployment rejected: a newer commit exists on main."
+            exit 1
+          fi
+
+          echo "Automatic release is current."
+
       - name: Deploy release to Azure
         env:
           AZURE_SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
