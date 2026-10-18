@@ -76,21 +76,34 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate Docker image metadata
-        id: meta
+      - name: Generate Go image metadata
+        id: meta_go
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/genzm0nks/ascendingmonk
+          bake-target: ascendingmonk
           tags: |
             type=raw,value=latest
             type=sha,format=long,prefix=sha-
 
-      - name: Build and push Docker image
+      - name: Generate Nginx image metadata
+        id: meta_nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/genzm0nks/ascendingmonk-nginx
+          bake-target: nginx
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long,prefix=sha-
+
+      - name: Build and push Docker images
         uses: docker/bake-action@v6
         with:
           files: |
             ./docker-bake.hcl
-            cwd://${{ steps.meta.outputs.bake-file-tags }}
-            cwd://${{ steps.meta.outputs.bake-file-annotations }}
-          targets: ascendingmonk
+            cwd://${{ steps.meta_go.outputs.bake-file-tags }}
+            cwd://${{ steps.meta_go.outputs.bake-file-annotations }}
+            cwd://${{ steps.meta_nginx.outputs.bake-file-tags }}
+            cwd://${{ steps.meta_nginx.outputs.bake-file-annotations }}
+          targets: ascendingmonk,nginx
           push: true
