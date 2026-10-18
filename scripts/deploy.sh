@@ -109,6 +109,10 @@ for service in ascendingmonk nginx; do
     nginx)
       expected_image="ghcr.io/genzm0nks/ascendingmonk-nginx:sha-$IMAGE_SHA"
       ;;
+    *)
+      echo "Error: Unexpected service: $service" >&2
+      exit 1
+      ;;
   esac
 
   if [[ "$actual_image" != "$expected_image" ]]; then
