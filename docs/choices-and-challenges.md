@@ -1113,6 +1113,35 @@ We prioritize to document the development as it happened over having a more line
 ### How was this decided?
 Plenary discussion online through a draft PR on GitHub. This document will reflect the final result of this discussion.
 
+## 20/10/2026
+### Description of choice
+Added two rulesets for branches. One set applies to `main`, the other applies to the all other branches.
+
+**`main`:**
+* Added rule blocking force pushes to `main`.
+* Added rule forbidding deletion of `main`.
+
+**Others:**
+* Added rule requiring pull requests (PR) before merging.
+* Added rule requiring review of PRs.
+  * Required at least one approval before allowing a merge.
+  * Required comments to be marked as resolved before merging.
+* Added rule requiring the branch to be up to date with regards to the `main` branch before allowing a merge.
+* Added rule requiring status checks to pass. I have assumed that Action names are enough to make the protection rule connect it to the relevant status checks (GitHub Action).
+* Added rule restricting allowed code quality results. Errors immmediately disqualify the PR.
+* Added rule forbidding force pushes.
+* Told GitHub that it may use merges, squashes and rebases when merging to main.
+  
+### Reason for choice
+We'd prefer having protected branches to further ensure (besides CI-checks, manual- and automated code review) that "bad" code is never merged to `main`. One reason for this is our use of the GitHub branching strategy (or flow). Thus, `main` must be in a state in which it can always be deployed, after being verified, tested. Further, we'd like to avoid accidents deleting `main`, or altering it irrevocably (force pushes). For the other branches, we can exploit our use of CI to enforce passing status checks by connecting protection rules with our GitHub Actions. We can also enforce (though somewhat less flexibly than we'd like, as may be seen in `branching-strategy.md`) the manual review process before merging. Finally, we require passing automated code quality reviews without any errors. This may change to be more restrictive once we get the automated code analysis tuned more.
+
+I chose one reviewer because requiring three approvals will slow us down way too much. This contradicts the requirements laid out in `branching-strategy.md`, but will allow us to maintain an brisk project heartbeat, potentially at the cost of quality. If you look at the review frequency and delay, you'll understand. Another factor behind this decision is the lack of flexibility in applying this branch protection rule. You must pick *one* number for *ALL* PRs. You cannot base it on PR contents. As such, we'll have to do this manually, and a requirement of at least one reviewer allows this. This choice also permits breaking of our internal rules with regards to everyone having to approve database changes. I thought that another possible way to introduce the aformentioned flexibility would be to exempt the team from certain rules, but that's not how the feature works. Expemting us all by using the bypass feature would weaken the other rules, since the bypass feature applies to all rules defined on the PR, not just one rule in the ruleset. As such, I chose not to use it. These concerns will have to be managed through mutual agreement.
+
+With regards to the rule on code quality output, I debated with myself whether to make it "warnings and higher" (higher = more severe kind of status, errors in this case). I decided against it because CodeRabbit has suggestions which it classifies as warnings, some of which are spurious. As we fine tune our setup with automated code quality scanning, we might have to make the debated change. I, for one, consider warnings very significant.
+  
+### How was this decided?
+Plenary debate from the PR containing the branching strategy document, then practical reconciliation with GitHub's branch protection offerings, at Max-Emil's discretion.
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
