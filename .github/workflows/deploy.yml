@@ -1,0 +1,123 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - CI / Continuous Delivery / Continuous Deployment
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy AscendingMonk
+    if: >-
+      (
+        github.event_name == 'workflow_dispatch' &&
+        github.ref == 'refs/heads/main'
+      ) ||
+      (
+        github.event_name == 'workflow_run' &&
+        vars.AUTO_DEPLOY_ENABLED == 'true' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      )
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: ascendingmonk-production
+      cancel-in-progress: false
+
+    steps:
+      - name: Select image SHA
+        id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_SHA: ${{ github.sha }}
+          PUBLISHED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            IMAGE_SHA="$PUBLISHED_SHA"
+          else
+            IMAGE_SHA="$MANUAL_SHA"
+          fi
+
+          echo "image_sha=$IMAGE_SHA" >> "$GITHUB_OUTPUT"
+          echo "Selected release SHA: $IMAGE_SHA"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify published images
+        env:
+          IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+        run: |
+          set -euo pipefail
+
+          for image in \
+            "ghcr.io/genzm0nks/ascendingmonk" \
+            "ghcr.io/genzm0nks/ascendingmonk-nginx"
+          do
+            echo "Checking $image:sha-$IMAGE_SHA"
+            docker buildx imagetools inspect "$image:sha-$IMAGE_SHA"
+          done
+
+      - name: Reject outdated automatic release
+        if: github.event_name == 'workflow_run'
+        env:
+          IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          CURRENT_MAIN_SHA="$(
+            gh api "repos/$GH_REPOSITORY/git/ref/heads/main" \
+              --jq '.object.sha'
+          )"
+
+          echo "Current main SHA: $CURRENT_MAIN_SHA"
+          echo "Selected release SHA: $IMAGE_SHA"
+
+          if [ "$IMAGE_SHA" != "$CURRENT_MAIN_SHA" ]; then
+            echo "::error::Automatic deployment rejected: a newer commit exists on main."
+            exit 1
+          fi
+
+          echo "Automatic release is current."
+
+      - name: Deploy release to Azure
+        env:
+          AZURE_SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
+          AZURE_SSH_HOST_KEY: ${{ secrets.AZURE_SSH_HOST_KEY }}
+          AZURE_SSH_PRIVATE_KEY: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+        run: |
+          set -euo pipefail
+
+          umask 077
+          mkdir -p "$HOME/.ssh"
+
+          trap 'rm -f "$HOME/.ssh/ascendingmonk_deploy"' EXIT
+
+          printf '%s\n' "$AZURE_SSH_PRIVATE_KEY" > "$HOME/.ssh/ascendingmonk_deploy"
+          printf '%s %s\n' "$AZURE_SSH_HOST" "$AZURE_SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+
+          ssh \
+            -i "$HOME/.ssh/ascendingmonk_deploy" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "monkdeploy@$AZURE_SSH_HOST" \
+            "sudo -n /opt/ascendingmonk-deploy/deploy.sh $IMAGE_SHA"

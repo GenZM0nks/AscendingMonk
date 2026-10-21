@@ -253,8 +253,8 @@ func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	loginRequest := LoginRequest{
-		Username: request.Form["username"][0],
-		Password: request.Form["password"][0],
+		Username: request.Form.Get("username"),
+		Password: request.Form.Get("password"),
 	}
 
 	_, validationErrors, loginError := loginUser(loginRequest)
