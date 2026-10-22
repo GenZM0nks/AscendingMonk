@@ -1113,6 +1113,199 @@ We prioritize to document the development as it happened over having a more line
 ### How was this decided?
 Plenary discussion online through a draft PR on GitHub. This document will reflect the final result of this discussion.
 
+## 21/10/2026
+
+### Description of choice
+
+We implemented a GitHub Actions CI/CD/CD pipeline for AscendingMonk and migrated the running Azure deployment from a Go binary managed directly by systemd to Docker Compose. The pipeline builds and validates our Go application, publishes versioned container images to GitHub Container Registry (GHCR), and supports deployment to our AlmaLinux 9.8 Azure VM. We deliberately keep automatic production deployment disabled for now (no automatic rollback); deployment through GitHub Actions has been verified manually.
+
+#### How the pipeline works
+
+Our repository uses GitHub Actions workflows in `.github/workflows/`, including `ci-cd-cd.yml` and `deploy.yml`. The intended flow is:
+
+```text
+Pull request
+    |
+    v
+CI: build, test, lint
+    |
+    v
+Review and merge into main
+    |
+    v
+CI runs for main
+    |
+    v
+Delivery: publish Go and Nginx images to private GHCR
+    |       (latest and sha-<full Git commit SHA> tags)
+    v
+Images available for deployment
+    |
+    +--> Current configuration: manually trigger Deploy to Azure
+    |
+    +--> Optional future configuration: automatic deployment after delivery
+    v
+Restricted SSH access to Azure VM
+    |
+    v
+Root-owned deployment script validates SHA and environment
+    |
+    v
+Docker Compose pulls and starts the specified images
+    |
+    v
+Verify containers, exact image references and HTTP response
+```
+
+Pull requests run CI checks before merging. A push to `main`, in our case a PR merge, triggers the build and delivery process. The delivery workflow publishes two images: the Go application and its Nginx reverse proxy. We publish both `latest` and commit-specific `sha-...` tags, but production deploys a specific full commit SHA instead of relying on the mutable `latest` tag.
+
+The VM stores its production Compose configuration and deployment script under `/opt/ascendingmonk-deploy/`. Compose runs two services:
+
+- `ascendingmonk`: the Go application, running as UID/GID `995:994`, with `DB_PATH=/data/ascendingmonk_with_orig.db` and the existing `/var/lib/ascendingmonk/` directory bind-mounted at `/data`.
+- `nginx`: a reverse proxy that exposes host TCP port `8080` and forwards requests to the Go application on the internal Docker network.
+
+The application and Nginx images use the same commit SHA. Both services have Docker restart policies. The Docker daemon is enabled at boot, while the previous native `ascendingmonk` systemd service is disabled and inactive. 
+
+The deployment script accepts a full 40-character hexadecimal Git SHA. It checks the Compose configuration and a marker indicating that the supervised Docker cutover has been completed, pulls the required images, starts the services without rebuilding on the VM, checks that both containers are running the expected images, and retries an HTTP request to the application on localhost port `8080`. The script does not implement automatic rollback.
+
+#### Current deployment policy
+
+Automatic deployment is intentionally gated by the GitHub Actions variable `AUTO_DEPLOY_ENABLED`, which we have not enabled. Consequently, publishing images after a merge does not by itself change the running Azure deployment. We successfully executed the manual `Deploy to Azure` workflow after the cutover. We have not yet tested a new merge while automatic deployment is enabled, since that will have to be coordinated with PR approvals.
+
+### Reason for choice
+
+#### Separate integration, delivery and deployment
+
+We wanted code validation to happen before changes are merged, reusable release artifacts to be produced from `main`, and production deployment to be an explicit, separately testable operation. This separation makes it easier to identify whether a problem belongs to the Go application, image publishing, authentication, the Azure host, or the deployment procedure.
+
+We chose GitHub Actions because the team already develops through GitHub pull requests and reviews. We chose GHCR because it integrates with that workflow. We use immutable-by-convention SHA tags to identify the exact source revision being deployed; `latest` is convenient for discovery but is not sufficiently precise for reproducible releases or rollback.
+
+#### Build images in CI, not on the production VM
+
+We chose to deploy published images rather than rebuild the Go application on the Azure VM. This reduces differences between the artifact validated by the pipeline and the artifact running in production. 
+
+Nginx now sits in front of Go while preserving the public port `8080` expected by our existing users and The Simulation. We did not introduce HTTPS, that will be a task for later in the course.
+
+#### Preserve production data and a recovery path
+
+Our SQLite database contains existing data and must survive container replacement. We therefore bind-mount the existing host data directory instead of copying a database into an image or creating a new empty database. We run the Go process as a non-root user with the appropriate filesystem permissions.
+
+We kept the previous systemd service installed but disabled after cutover. It offers a manual fallback if Docker deployment fails. It must never be run concurrently with the containerized application against the same SQLite database. Before cutover we created and integrity-checked an online SQLite backup. That backup is a recovery precaution, not something to restore during ordinary rollback: restoring an older database could discard newer user data.
+
+#### Limit deployment privileges
+
+We use a dedicated `monkdeploy` SSH account for GitHub Actions. Its passwordless sudo permission is restricted to the root-owned deployment script with a full hexadecimal SHA argument; it does not have general unrestricted sudo access. The deployment script and Compose configuration are root-owned so the deployment account cannot simply edit them to execute arbitrary root commands.
+
+Our GHCR packages are private. To let the VM pull images, we authenticated Docker to GHCR with a classic personal access token limited to `read:packages`. The credential is stored in root's Docker configuration rather than committed to Git. This is functional but creates a credential-expiration and rotation responsibility, which we should revisit later.
+
+#### Prefer incremental verification over a single risky cutover
+
+The application was already serving requests from the VM. We therefore tested the Go and Nginx images on separate localhost ports on the vm and with copies of the SQLite database before changing production. We deliberately avoided disabling SELinux, relabeling the live database, or making untested changes to the VM's firewall. Automatic deployment remains disabled until the team chooses to accept the operational risk of unattended production changes.
+
+### How was this decided?
+
+We developed and validated the pipeline incrementally. The implementation and verification sequence is important because several practical problems only became visible when testing the actual host and existing database.
+
+#### 1. Validate the CI and delivery workflows
+
+We created the GitHub Actions workflows and opened PR #111 for the deployment changes. The PR checks passed, and the PR was merged into `main`. CI then completed successfully and published the Go and Nginx images. The resulting full source commit SHA was `102f5a791bfca53b4653fca19deb49e00fd1f8c7`. We verified the existence of images tagged with that SHA.
+
+This verified CI and image publishing on `main`; it did not by itself prove that production deployment worked.
+
+#### 2. Resolve private-image authentication
+
+We initially needed a way for Azure to pull the published GHCR images. Making the packages public was unavailable under the organization's settings. Rather than changing organization policy, we retained private images and used a token with only `read:packages` on the VM. We confirmed Docker could authenticate and pull both images, including when Compose was run as root by the deployment script.
+
+The lesson was that a successful publish job does not guarantee the production host can retrieve its artifacts. Registry visibility and host-side credentials are separate parts of delivery.
+
+#### 3. Test the Go image without touching production
+
+We started an isolated Go container bound only to localhost port `18080`, using a separate SQLite snapshot rather than the live database. We confirmed the homepage returned HTTP `200`, then registered and logged in a test user successfully. This tested not only read access but also database writes and application behavior.
+
+One isolated test container exited unexpectedly with code `2` and without useful logs. We investigated and repeated the tests; the later isolated runs remained stable. We did not treat a single failed container start as sufficient evidence to modify the live database or weaken host security.
+
+#### 4. Test Nginx and the complete request path
+
+We connected an isolated Nginx container to the Go test container through a dedicated Docker network and exposed Nginx only on localhost port `18081`. The homepage and login worked through the proxy, both returning HTTP `200`.
+
+This distinguished successful application startup from successful end-to-end routing through Nginx. 
+
+#### 5. Investigate SQLite permissions and SELinux
+
+The VM uses SELinux in `Enforcing` mode. We checked the host filesystem labels and Docker security configuration rather than assuming that SELinux was either blocking or protecting the container. A separate security test used another SQLite snapshot and a Go container on localhost port `18082`, this time without `--security-opt label=disable`. Registration succeeded, demonstrating that SQLite writes worked under the host's existing Docker configuration.
+
+We did **not** establish that Docker containers were SELinux-confined: Docker's reported security options did not include SELinux integration. The practical result was that no SELinux policy change or live-database relabeling was needed for this deployment. Stronger container confinement is a possible future investigation, not a claim about the current setup.
+
+#### 6. Prepare and verify the deployment files
+
+We placed `compose.prod.yaml` and `deploy.sh` under `/opt/ascendingmonk-deploy/`, validated the Compose configuration, and compared the deployed files with the repository versions using SHA-256 checksums. We also retained a backup of the previous deployment script when updating it.
+
+We configured restricted sudo access for `monkdeploy` and tested the same deployment command both as root and through the deployment account. This verified that the permission restrictions still allowed the intended workflow.
+
+#### 7. Protect the database and perform a supervised cutover
+
+Before changing the live service, we made an online SQLite backup under `/var/backups/ascendingmonk/` and verified `PRAGMA integrity_check` returned `ok`. We stopped and disabled the native systemd service, checked that port `8080` was free, and started the two Compose services with the specific published SHA. We reused the existing database in `/var/lib/ascendingmonk/`; we did not restore or replace it.
+
+Both containers started successfully. We verified that the production homepage returned HTTP `200` and that login with an existing account returned HTTP `200`. Application logs showed normal startup, and Nginx logs confirmed successful requests, including external traffic. We then created the cutover marker used by the deployment script to prevent accidental deployment before the environment is prepared.
+
+The important operational constraint is that the native systemd application and the containerized application must not be started simultaneously against the same database.
+
+#### 8. Verify repeatable deployment and GitHub Actions access
+
+We ran the deployment script directly using the full SHA, then again through the restricted `monkdeploy` sudo path. Both runs completed successfully, pulled the private images, verified the containers and image references, and passed the HTTP check.
+
+Finally, we triggered the manual `Deploy to Azure` GitHub Actions workflow. The workflow run succeeded. A separate production request after that workflow returned `Production HTTP status: 200`. This confirmed that the GitHub Actions-to-Azure path works with the running Docker deployment.
+
+We have not yet enabled unattended deployment after merges. The next documentation PR can be used to verify another post-cutover merge and image publication while production remains unchanged; that is a proposed test, not one already completed.
+
+#### Challenges and lessons learned
+
+- **Image publication and image access are different problems.** GHCR publishing succeeded, but the VM also needed authorization to pull private images.
+- **A healthy HTTP response is only one layer of evidence.** We tested the Go container, the Nginx proxy, user registration, existing-user login, logs, image identities, and the GitHub Actions execution path separately.
+- **Existing data changes the deployment strategy.** Using the live SQLite file required permission checks, isolated snapshots, a verified backup, and a cutover in which only one application instance accessed the database.
+- **Security assumptions require verification.** SELinux was enforcing on the host, but that did not mean the containers were necessarily using SELinux confinement.
+- **Rollback and database recovery are not identical.** Switching back to the old systemd service can recover application availability without restoring an older SQLite snapshot and losing newer writes.
+- **Automation should be introduced in stages.** We first proved the script and restricted remote access manually before considering unattended deployment.
+
+#### Possible Future Improvements
+
+These are options for team discussion, not changes already implemented or agreed upon.
+
+##### Skip delivery and deployment for documentation-only changes
+
+We could detect changed files and skip image publishing when a merge changes only documentation. We should preserve required PR checks and ensure the deployment workflow cannot run merely because a documentation-only CI workflow succeeded. This would reduce unnecessary builds and registry uploads, but requires coordinated conditions across the delivery and deployment workflows.
+
+##### Enable automatic deployment after successful delivery
+
+We already have the `AUTO_DEPLOY_ENABLED` gate. Once we have verified the desired merge behavior and agreed on the operational risk, we could enable it and test a small, intentional PR. This would complete unattended deployment from `main`, but a change that passes CI could still cause production problems because we do not yet have automatic rollback.
+
+##### Improve health checks
+
+We could add a dedicated health endpoint and checks for application readiness and expected response content, rather than relying mainly on HTTP `200` from the homepage. More extensive smoke tests might include a safe database read and selected API behavior. We would need to avoid tests that alter production user data.
+
+##### Add automatic rollback or a safer release strategy
+
+The current script reports failure but does not automatically restore the previous containers. We could retain the last known-good image SHA and automate a controlled rollback. SQLite compatibility and schema migrations would require special care: rolling back application code does not necessarily roll back database changes safely.
+
+##### Improve GHCR credentials
+
+The current read-only PAT can expire (but the 90 days will last the course) or be revoked, preventing future pulls. We could investigate a more maintainable machine credential or another supported authentication mechanism, with clear rotation procedures and minimal privileges.
+
+##### Strengthen container isolation
+
+We could investigate enabling and testing SELinux container integration, reducing container privileges further, and tightening filesystem access. Any changes would need isolated tests confirming that SQLite writes still work, without relabeling or risking the live database unnecessarily.
+
+##### Add monitoring and deployment visibility
+
+We could add alerts for failed workflows, container restarts, and HTTP failures, as well as clearer deployment records showing the active SHA. This would make failures easier to notice and diagnose, at the cost of additional configuration and maintenance.
+
+##### Revisit HTTPS and public network exposure
+
+The service still uses HTTP on port `8080` to preserve existing behavior. We could later evaluate TLS termination and a standard HTTPS entry point, taking into account the assignment's existing traffic and tests before changing externally visible ports or URLs.
+
+The current implementation deliberately favors a working, verifiable pipeline and a controlled migration over introducing all these features at once. 
+
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
