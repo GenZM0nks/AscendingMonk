@@ -24,12 +24,12 @@ func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 			Value:    "",
 			MaxAge:   -1,
 			HttpOnly: true,
+			Secure:   true,
 			Path:     "/", // Should ensure that the session token is sent for all endpoints
 		})
 	}
 
 	http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
-	return
 }
 
 // HTTPResponse models an HTTP response with a status code and a message
