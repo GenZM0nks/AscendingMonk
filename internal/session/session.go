@@ -33,13 +33,22 @@ func Authorize(request *http.Request) error {
 		return errors.New("session: session token is missing data")
 	}
 
+	var createdAtString string
+
 	// Get session data
 	sessionSQLRow := database.QueryRow("SELECT * FROM session_tokens WHERE session_value = ?", sessionToken.Value)
 	var session sessionData
-	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &session.createdAt, &session.id)
+	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &createdAtString, &session.id)
 	if missingSessionError != nil {
 		return missingSessionError
 	}
+
+	var dateTimeParsingError error
+	session.createdAt, dateTimeParsingError = time.Parse("2006-01-02 15:04:05.999999999Z07:00", createdAtString)
+	if dateTimeParsingError != nil {
+		return dateTimeParsingError
+	}
+
 	// Check if session is expired
 	if time.Now().After(session.createdAt.Add(2 * time.Hour)) {
 		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session.sessionValue)
