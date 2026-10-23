@@ -11,9 +11,13 @@
     <div class="navigation">
       <nav>
         <h1><a id="nav-logo" href="/">¿Who Knows?</a></h1>
-        <a id="nav-login" href="/login">Log in</a>
-        <a id="nav-register" href="/register">Register</a>
-        <a id="nav-weather" href="/weather">Weather</a>
+        {{if not .IsLoggedIn}}
+          <a id="nav-login" href="/login">Log in</a>
+          <a id="nav-register" href="/register">Register</a>
+        {{else}}
+          <a id="nav-logout" href="/api/logout">Log out</a>
+          <a id="nav-weather" href="/weather">Weather</a>
+        {{end}}
       </nav>
     </div>
 

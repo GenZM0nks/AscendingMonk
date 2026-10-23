@@ -24,7 +24,7 @@ type WeatherDay struct {
 
 // WeatherPageData contains the data needed to render the weather page.
 type WeatherPageData struct {
-	Data     PageData
+	PageData
 	Location string
 	Days     []WeatherDayView
 }
