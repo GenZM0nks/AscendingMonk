@@ -18,7 +18,7 @@ import (
 func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
 	token, err := request.Cookie("session_token") // Currently ignores if there's no token
 	if err == nil {
-		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.String())
+		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.Value)
 		http.SetCookie(responseWriter, &http.Cookie{
 			Name:     "session_token",
 			Value:    "",
