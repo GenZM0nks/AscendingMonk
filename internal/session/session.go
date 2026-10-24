@@ -33,20 +33,13 @@ func Authorize(request *http.Request) error {
 		return errors.New("session: session token is missing data")
 	}
 
-	var createdAtString string
-
 	// Get session data
-	sessionSQLRow := database.QueryRow("SELECT * FROM session_tokens WHERE session_value = ?", sessionToken.Value)
+	sessionSQLRow := database.QueryRow("SELECT session_value, csrf_value, created_at, user_id FROM session_tokens WHERE session_value = ?", sessionToken.Value)
 	var session sessionData
-	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &createdAtString, &session.id)
+	// The SQLite driver decodes TIMESTAMP columns into time.Time values.
+	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &session.createdAt, &session.id)
 	if missingSessionError != nil {
 		return missingSessionError
-	}
-
-	var dateTimeParsingError error
-	session.createdAt, dateTimeParsingError = time.Parse("2006-01-02 15:04:05.999999999Z07:00", createdAtString)
-	if dateTimeParsingError != nil {
-		return dateTimeParsingError
 	}
 
 	// Check if session is expired
