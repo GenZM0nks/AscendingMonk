@@ -122,6 +122,7 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) {
 		Value:    sessionToken,
 		Expires:  time.Now().Add(2 * time.Hour),
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/", // Should ensure that the session token is sent for all endpoints
 	})
 
@@ -129,7 +130,8 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) {
 		Name:     "csrf_token",
 		Value:    csrfToken,
 		Expires:  time.Now().Add(2 * time.Hour),
-		HttpOnly: false,
+		Secure:   true,
+		HttpOnly: true,
 	})
 }
 
