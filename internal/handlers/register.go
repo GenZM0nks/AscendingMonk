@@ -23,11 +23,12 @@ type RegisterData struct {
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /register [get]
-func Register(responseWriter http.ResponseWriter, _ *http.Request) {
+func Register(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	registerData := RegisterData{
 		PageData: PageData{
-			PageTitle: "Register",
-			Flashes:   nil,
+			PageTitle:  "Register",
+			Flashes:    nil,
+			IsLoggedIn: IsLoggedIn(requestPointer),
 		},
 		Errors:   nil,
 		Username: "",
@@ -42,8 +43,8 @@ func Register(responseWriter http.ResponseWriter, _ *http.Request) {
 }
 
 // RegisterPost handles registration submitted from the browser.
-func RegisterPost(responseWriter http.ResponseWriter, request *http.Request) {
-	requestError := request.ParseForm()
+func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Request) {
+	requestError := requestPointer.ParseForm()
 
 	if requestError != nil {
 		http.Error(
@@ -54,10 +55,10 @@ func RegisterPost(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	username := request.FormValue("username")
-	email := request.FormValue("email")
-	password := request.FormValue("password")
-	password2 := request.FormValue("password2")
+	username := requestPointer.FormValue("username")
+	email := requestPointer.FormValue("email")
+	password := requestPointer.FormValue("password")
+	password2 := requestPointer.FormValue("password2")
 
 	validationErrors, registerError := registerUser(
 		username,
@@ -78,8 +79,9 @@ func RegisterPost(responseWriter http.ResponseWriter, request *http.Request) {
 	if len(validationErrors) > 0 {
 		registerData := RegisterData{
 			PageData: PageData{
-				PageTitle: "Register",
-				Flashes:   nil,
+				PageTitle:  "Register",
+				Flashes:    nil,
+				IsLoggedIn: IsLoggedIn(requestPointer),
 			},
 			Errors:   validationErrors,
 			Username: username,
@@ -97,7 +99,7 @@ func RegisterPost(responseWriter http.ResponseWriter, request *http.Request) {
 
 	http.Redirect(
 		responseWriter,
-		request,
+		requestPointer,
 		"/login",
 		http.StatusSeeOther,
 	)

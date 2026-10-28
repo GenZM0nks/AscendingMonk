@@ -23,11 +23,12 @@ import (
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /login [get]
-func ServeLoginPage(responseWriter http.ResponseWriter, _ *http.Request) {
+func ServeLoginPage(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	pageData := LoginResponse{
 		PageData: PageData{
-			PageTitle: "Login",
-			Flashes:   nil,
+			PageTitle:  "Login",
+			Flashes:    nil,
+			IsLoggedIn: IsLoggedIn(requestPointer),
 		},
 		Errors:   nil,
 		Username: "",
@@ -253,8 +254,8 @@ func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	loginRequest := LoginRequest{
-		Username: request.Form["username"][0],
-		Password: request.Form["password"][0],
+		Username: request.Form.Get("username"),
+		Password: request.Form.Get("password"),
 	}
 
 	_, validationErrors, loginError := loginUser(loginRequest)

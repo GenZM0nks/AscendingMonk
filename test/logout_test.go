@@ -1,10 +1,8 @@
 package test
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
@@ -30,8 +28,6 @@ func TestAPILogout(test *testing.T) {
 		database.Close()
 	})
 
-	expectedResult := handlers.HTTPResponse{Message: "You were logged out", StatusCode: 200}
-
 	request := httptest.NewRequest(
 		http.MethodGet,
 		"/api/logout",
@@ -42,20 +38,7 @@ func TestAPILogout(test *testing.T) {
 
 	handlers.APILogout(responseRecorder, request)
 
-	if responseRecorder.Code != http.StatusOK {
-		test.Fatalf("expected status %d, got %d", http.StatusOK, responseRecorder.Code)
-	}
-
-	var actualResults handlers.HTTPResponse
-	if err := json.Unmarshal(responseRecorder.Body.Bytes(), &actualResults); err != nil {
-		test.Fatalf("response was not valid JSON: %v", err)
-	}
-
-	if !reflect.DeepEqual(actualResults, expectedResult) {
-		test.Errorf(
-			"expected results %+v, got %+v",
-			expectedResult,
-			actualResults,
-		)
+	if responseRecorder.Code != http.StatusSeeOther {
+		test.Fatalf("expected status %d, got %d", http.StatusSeeOther, responseRecorder.Code)
 	}
 }

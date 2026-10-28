@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -62,6 +63,8 @@ func RegisterAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	)
 
 	if registerError != nil {
+		log.Printf("Registration failed: %v", registerError)
+
 		http.Error(
 			responseWriter,
 			"Failed to register user",

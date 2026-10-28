@@ -1,0 +1,25 @@
+# Git and development tooling
+.git
+.github
+.vscode
+.idea
+hooks
+
+# Local databases and secrets
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+
+# Local build artifacts
+ascendingmonk
+*.exe
+
+# Repository documentation
+*.md
+*.svg
+
+# Generated OpenAPI specifications
+docs/swagger.yaml
+docs/swagger.json

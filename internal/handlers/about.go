@@ -15,10 +15,11 @@ import (
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router /about [get]
-func About(responseWriter http.ResponseWriter, _ *http.Request) {
+func About(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	pageData := PageData{
-		PageTitle: "About",
-		Flashes:   nil,
+		PageTitle:  "About",
+		Flashes:    nil,
+		IsLoggedIn: IsLoggedIn(requestPointer),
 	}
 
 	templates.LoadAndExecuteTemplate("web/templates/about.html", pageData, responseWriter)

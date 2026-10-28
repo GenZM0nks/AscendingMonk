@@ -34,3 +34,6 @@ go.work.sum
 # Database
 *.db
 *.sqlite
+
+# Local Docker image archives
+ascendingmonk-test-image.tar
