@@ -3,9 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -93,70 +91,8 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 		return
 	}
-	var databaseError error
-	var sessionToken string
-	var csrfToken string
-	for hasValidToken := true; hasValidToken; hasValidToken = databaseError != nil { // hasValidToken = databaseError != nil could become hasValidToken = someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
 
-		var tokenError error
-		sessionToken, tokenError = session.GenerateToken()
-
-		if tokenError != nil {
-			http.Error(
-				responseWriter,
-				"Failed to generate token",
-				http.StatusInternalServerError,
-			)
-			return
-		}
-
-		tokenError = nil
-		csrfToken, tokenError = session.GenerateToken()
-
-		if tokenError != nil {
-			http.Error(
-				responseWriter,
-				"Failed to generate token",
-				http.StatusInternalServerError,
-			)
-			return
-		}
-
-		// Tokens are randomly generated, the liklyhood of two identical is slim to none. Nonetheless. If two identical tokens happen to be generated, the database with send back an error (for not upholding the UNIQUE CONSTRAINT), This will cause the program to enter the statement below and crash the system, instead of the intented do-while loop for generating a new token.
-		_, databaseError := database.Execute(
-			"INSERT INTO session_tokens (session_value, csrf_value, created_at, user_id) VALUES (?, ?, ?, ?)",
-			sessionToken,
-			csrfToken,
-			time.Now(),
-			user.id,
-		)
-
-		if databaseError != nil {
-			fmt.Print(databaseError)
-			http.Error(
-				responseWriter,
-				"Failed to login",
-				http.StatusInternalServerError,
-			)
-			return
-		}
-
-	}
-
-	http.SetCookie(responseWriter, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken,
-		Expires:  time.Now().Add(2 * time.Hour),
-		HttpOnly: true,
-		Path:     "/", // Should ensure that the session token is sent for all endpoints
-	})
-
-	http.SetCookie(responseWriter, &http.Cookie{
-		Name:     "csrf_token",
-		Value:    csrfToken,
-		Expires:  time.Now().Add(2 * time.Hour),
-		HttpOnly: false,
-	})
+	session.RegisterSession(responseWriter, user.id)
 
 	http.Redirect(
 		responseWriter,
