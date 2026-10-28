@@ -270,7 +270,7 @@ func windDirection(degrees int) string {
 // @Failure 500 {string} string "Failed to fetch weather forecast"
 // @Tags Pages
 // @Router /weather [get]
-func Weather(responseWriter http.ResponseWriter, _ *http.Request) {
+func Weather(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	weatherData, err := fetchWeatherData()
 	if err != nil {
 		http.Error(
@@ -296,12 +296,13 @@ func Weather(responseWriter http.ResponseWriter, _ *http.Request) {
 	}
 
 	pageData := WeatherPageData{
-		Data: PageData{
-			PageTitle: "Weather",
-			Flashes:   nil,
+		PageData{
+			PageTitle:  "Weather",
+			Flashes:    nil,
+			IsLoggedIn: IsLoggedIn(requestPointer),
 		},
-		Location: weatherData.Location,
-		Days:     days,
+		weatherData.Location,
+		days,
 	}
 
 	templates.LoadAndExecuteTemplate(

@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
@@ -18,29 +16,20 @@ import (
 // @Tags API
 // @Router /api/logout [get]
 func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
-	logoutJSON, err := json.Marshal(HTTPResponse{"You were logged out", 200})
-
-	if err != nil {
-		responseWriter.WriteHeader(500)
-		errorAsJSON, err := json.Marshal(HTTPResponse{fmt.Sprintf("Error converting logout message to JSON: %s", err), 500})
-
-		if err != nil {
-			marshallingErr, _ := json.Marshal("Failed to convert error message into an HTTPResponse.")
-			responseWriter.Write(marshallingErr)
-			return
-		}
-
-		responseWriter.Write(errorAsJSON)
-		return
-	}
-
 	token, err := request.Cookie("session_token") // Currently ignores if there's no token
 	if err == nil {
-		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.String())
+		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.Value)
+		http.SetCookie(responseWriter, &http.Cookie{
+			Name:     "session_token",
+			Value:    "",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+			Path:     "/", // Should ensure that the session token is sent for all endpoints
+		})
 	}
 
-	responseWriter.Header().Set("Content-Type", "application/json; charset=utf-8")
-	responseWriter.Write(logoutJSON)
+	http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
 }
 
 // HTTPResponse models an HTTP response with a status code and a message

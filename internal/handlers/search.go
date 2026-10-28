@@ -88,9 +88,9 @@ func fetchSearchResults(query string, language string) (results []SearchResult, 
 // @Failure 500 {string} string "error"
 // @Tags Pages
 // @Router / [get]
-func Search(responseWriter http.ResponseWriter, request *http.Request) {
-	query := request.URL.Query().Get("q")
-	language := request.URL.Query().Get("language")
+func Search(responseWriter http.ResponseWriter, requestPointer *http.Request) {
+	query := requestPointer.URL.Query().Get("q")
+	language := requestPointer.URL.Query().Get("language")
 	searchResults, err := fetchSearchResults(query, language)
 
 	if err != nil {
@@ -98,14 +98,15 @@ func Search(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 
 	pageData := PageData{
-		PageTitle: "Search",
-		Flashes:   nil,
+		PageTitle:  "Search",
+		Flashes:    nil,
+		IsLoggedIn: IsLoggedIn(requestPointer),
 	}
 
 	searchData := SearchData{
-		Data:          pageData,
-		Query:         query,
-		SearchResults: searchResults,
+		pageData,
+		query,
+		searchResults,
 	}
 
 	templates.LoadAndExecuteTemplate("web/templates/search.html", searchData, responseWriter)

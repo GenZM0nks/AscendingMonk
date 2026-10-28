@@ -2,7 +2,7 @@ package handlers
 
 // SearchData combines PageData and a query for the search template.
 type SearchData struct {
-	Data          PageData
+	PageData
 	Query         string
 	SearchResults []SearchResult
 }

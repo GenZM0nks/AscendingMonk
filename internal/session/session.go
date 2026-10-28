@@ -34,12 +34,14 @@ func Authorize(request *http.Request) error {
 	}
 
 	// Get session data
-	sessionSQLRow := database.QueryRow("SELECT * FROM session_tokens WHERE session_value = ?", sessionToken.Value)
+	sessionSQLRow := database.QueryRow("SELECT session_value, csrf_value, created_at, user_id FROM session_tokens WHERE session_value = ?", sessionToken.Value)
 	var session sessionData
+	// The SQLite driver decodes TIMESTAMP columns into time.Time values.
 	missingSessionError := sessionSQLRow.Scan(&session.sessionValue, &session.csrfValue, &session.createdAt, &session.id)
 	if missingSessionError != nil {
 		return missingSessionError
 	}
+
 	// Check if session is expired
 	if time.Now().After(session.createdAt.Add(2 * time.Hour)) {
 		_, databaseError := database.Execute("DELETE FROM session_tokens WHERE session_value = ?", session.sessionValue)
