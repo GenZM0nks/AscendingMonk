@@ -6,6 +6,7 @@ services:
     image: ascendingmonk:local
     environment:
       DB_PATH: /data/ascendingmonk.db
+      COOKIE_SECURE: "false"
     volumes:
       - ascendingmonk-local-data:/data
     expose:
