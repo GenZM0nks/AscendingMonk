@@ -17,7 +17,7 @@ func registerUser(
 	email string,
 	password string,
 	password2 string,
-) ([]ValidationError, error) {
+) (uint64, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	// Check required fields.
@@ -56,7 +56,7 @@ func registerUser(
 
 	// Do not query the database if the submitted form is already invalid
 	if len(validationErrors) > 0 {
-		return validationErrors, nil
+		return 0, validationErrors, nil
 	}
 
 	// Check the UNIQUE constraint on username
@@ -70,7 +70,7 @@ func registerUser(
 	usernameError := usernameRow.Scan(&existingUsername)
 
 	if usernameError != nil && usernameError != sql.ErrNoRows {
-		return nil, usernameError
+		return 0, nil, usernameError
 	}
 
 	if usernameError == nil {
@@ -92,7 +92,7 @@ func registerUser(
 	emailError := emailRow.Scan(&existingEmail)
 
 	if emailError != nil && emailError != sql.ErrNoRows {
-		return nil, emailError
+		return 0, nil, emailError
 	}
 
 	if emailError == nil {
@@ -104,7 +104,7 @@ func registerUser(
 	}
 
 	if len(validationErrors) > 0 {
-		return validationErrors, nil
+		return 0, validationErrors, nil
 	}
 
 	// Hash the password before storing it
@@ -114,10 +114,10 @@ func registerUser(
 	)
 
 	if hashError != nil {
-		return nil, hashError
+		return 0, nil, hashError
 	}
 
-	_, databaseError := database.Execute(
+	result, databaseError := database.Execute(
 		"INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
 		username,
 		email,
@@ -125,8 +125,14 @@ func registerUser(
 	)
 
 	if databaseError != nil {
-		return nil, databaseError
+		return 0, nil, databaseError
 	}
 
-	return nil, nil
+	resultID, lastInsertIDError := result.LastInsertId()
+
+	if lastInsertIDError != nil {
+		return 0, nil, lastInsertIDError
+	}
+
+	return uint64(resultID), nil, nil
 }
