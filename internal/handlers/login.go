@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -92,7 +93,15 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		return
 	}
 
-	session.RegisterSession(responseWriter, user.id)
+	tokenGenerationError := session.RegisterSession(responseWriter, user.id)
+	if tokenGenerationError != nil {
+		http.Error(
+			responseWriter,
+			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"", user.Username),
+			http.StatusInternalServerError,
+		)
+		return
+	}
 
 	http.Redirect(
 		responseWriter,

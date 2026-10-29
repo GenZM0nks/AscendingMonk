@@ -55,7 +55,7 @@ func RegisterAPI(responseWriter http.ResponseWriter, request *http.Request) {
 	password := request.FormValue("password")
 	password2 := request.FormValue("password2")
 
-	validationErrors, registerError := registerUser(
+	_, validationErrors, registerError := registerUser(
 		username,
 		email,
 		password,

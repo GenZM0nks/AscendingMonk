@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"github.com/GenZM0nks/AscendingMonk/internal/session"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
@@ -63,7 +62,7 @@ func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Reque
 	password := requestPointer.FormValue("password")
 	password2 := requestPointer.FormValue("password2")
 
-	validationErrors, registerError := registerUser(
+	userID, validationErrors, registerError := registerUser(
 		username,
 		email,
 		password,
@@ -100,21 +99,15 @@ func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Reque
 		return
 	}
 
-	var id uint64
-	idRow := database.QueryRow("SELECT id FROM users WHERE username = ?", username)
-	noSuchUsernameError := idRow.Scan(&id)
-
-	if noSuchUsernameError != nil {
+	tokenGenerationError := session.RegisterSession(responseWriter, userID)
+	if tokenGenerationError != nil {
 		http.Error(
 			responseWriter,
-			fmt.Sprintf("Failed to find user \"%s\"", username),
+			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"", username),
 			http.StatusInternalServerError,
 		)
-
 		return
 	}
-
-	session.RegisterSession(responseWriter, id)
 
 	http.Redirect(
 		responseWriter,
