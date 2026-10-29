@@ -3,6 +3,7 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"os"
 
 	"errors"
@@ -68,9 +69,11 @@ func Authorize(request *http.Request) error {
 // session_token and csrf_token. The cookies are valid for two hours.
 func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 	var retry = true
+	var tries = 0
 	var sessionToken string
 	var csrfToken string
-	for retry { // databaseError != nil could become someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
+	var registerRetries = 5
+	for retry && tries < registerRetries { // databaseError != nil could become someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
 		var tokenError error
 		sessionToken, tokenError = GenerateToken()
 
@@ -97,6 +100,14 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 		if databaseError == nil {
 			retry = false
 		}
+
+		registerRetries++
+	}
+
+	// If we escape the above scope and retry is still true,
+	// then tries >= registerRetries.
+	if retry {
+		return fmt.Errorf("Failed to register a session %d times. Try again later", registerRetries)
 	}
 
 	var secureCookies = os.Getenv("COOKIE_SECURE") != "false"
