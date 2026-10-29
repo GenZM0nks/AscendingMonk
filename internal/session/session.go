@@ -3,6 +3,7 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"os"
 
 	"errors"
 	"net/http"
@@ -98,12 +99,14 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 		}
 	}
 
+	var secureCookies = os.Getenv("COOKIE_SECURE") != "false"
+
 	http.SetCookie(responseWriter, &http.Cookie{
 		Name:     "session_token",
 		Value:    sessionToken,
 		Expires:  time.Now().Add(2 * time.Hour),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secureCookies,
 		Path:     "/", // Should ensure that the session token is sent for all endpoints
 	})
 
@@ -111,7 +114,7 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 		Name:     "csrf_token",
 		Value:    csrfToken,
 		Expires:  time.Now().Add(2 * time.Hour),
-		Secure:   true,
+		Secure:   secureCookies,
 		HttpOnly: true,
 	})
 

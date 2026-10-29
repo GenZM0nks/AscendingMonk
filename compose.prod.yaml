@@ -4,6 +4,7 @@ services:
     user: "995:994"
     environment:
       DB_PATH: /data/ascendingmonk_with_orig.db
+      COOKIE_SECURE: "false"
     volumes:
       - type: bind
         source: /var/lib/ascendingmonk
