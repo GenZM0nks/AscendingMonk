@@ -97,7 +97,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	if tokenGenerationError != nil {
 		http.Error(
 			responseWriter,
-			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"", user.Username),
+			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"\nError: %v", user.Username, tokenGenerationError),
 			http.StatusInternalServerError,
 		)
 		return

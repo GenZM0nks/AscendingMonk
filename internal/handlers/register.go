@@ -103,7 +103,7 @@ func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Reque
 	if tokenGenerationError != nil {
 		http.Error(
 			responseWriter,
-			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"", username),
+			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"\nError: %v", username, tokenGenerationError),
 			http.StatusInternalServerError,
 		)
 		return
