@@ -69,7 +69,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		http.Error(
 			responseWriter,
 			"Failed to login user",
-			http.StatusInternalServerError,
+			http.StatusUnprocessableEntity,
 		)
 		return
 	}
@@ -98,7 +98,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		http.Error(
 			responseWriter,
 			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"\nError: %v", user.Username, tokenGenerationError),
-			http.StatusInternalServerError,
+			http.StatusUnprocessableEntity,
 		)
 		return
 	}
@@ -209,7 +209,7 @@ func LoginAPI(responseWriter http.ResponseWriter, request *http.Request) {
 		http.Error(
 			responseWriter,
 			"Failed to login user",
-			http.StatusInternalServerError,
+			http.StatusUnprocessableEntity,
 		)
 		return
 	}
