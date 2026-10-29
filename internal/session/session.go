@@ -3,7 +3,6 @@ package session
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 
 	"errors"
 	"net/http"
@@ -66,34 +65,23 @@ func Authorize(request *http.Request) error {
 // RegisterSession initializes a session for a user who just logged in.
 // It creates a database cell in a sessions table and sets two cookies on the client side,
 // session_token and csrf_token. The cookies are valid for two hours.
-func RegisterSession(responseWriter http.ResponseWriter, userID uint64) {
-	var databaseError error
+func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
+	var retry = true
 	var sessionToken string
 	var csrfToken string
-	for hasValidToken := true; hasValidToken; hasValidToken = databaseError != nil { // hasValidToken = databaseError != nil could become hasValidToken = someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
-
+	for retry { // databaseError != nil could become someCounter < maxAttempts || databaseError != nil And by extracting this loop into a function, we could return an error, which could warn us that the database session tokens is so filled, that randomly generating multiple strings created duplicates
 		var tokenError error
 		sessionToken, tokenError = GenerateToken()
 
 		if tokenError != nil {
-			http.Error(
-				responseWriter,
-				"Failed to generate token",
-				http.StatusInternalServerError,
-			)
-			return
+			return tokenError
 		}
 
 		tokenError = nil
 		csrfToken, tokenError = GenerateToken()
 
 		if tokenError != nil {
-			http.Error(
-				responseWriter,
-				"Failed to generate token",
-				http.StatusInternalServerError,
-			)
-			return
+			return tokenError
 		}
 
 		// Tokens are randomly generated, the liklyhood of two identical is slim to none. Nonetheless. If two identical tokens happen to be generated, the database with send back an error (for not upholding the UNIQUE CONSTRAINT), This will cause the program to enter the statement below and crash the system, instead of the intented do-while loop for generating a new token.
@@ -105,16 +93,9 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) {
 			userID,
 		)
 
-		if databaseError != nil {
-			fmt.Print(databaseError)
-			http.Error(
-				responseWriter,
-				"Failed to login",
-				http.StatusInternalServerError,
-			)
-			return
+		if databaseError == nil {
+			retry = false
 		}
-
 	}
 
 	http.SetCookie(responseWriter, &http.Cookie{
@@ -133,6 +114,8 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) {
 		Secure:   true,
 		HttpOnly: true,
 	})
+
+	return nil
 }
 
 type sessionData struct {
