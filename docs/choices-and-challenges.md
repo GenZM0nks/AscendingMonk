@@ -1421,8 +1421,7 @@ sudo journalctl -u ascendingmonk-azure-upload.service -n 20 --no-pager
 sudo journalctl -u ascendingmonk-azure-daily.service -n 20 --no-pager
 ```
 
-For a real recovery, stop application writers, download or select a known-good backup, verify its SQLite integrity, preserve the current database and any WAL/SHM files, restore with correct ownership/permissions/SELinux context, and test login and key application functions. Do not replace the live database just to test a restore. Exact Docker and volume steps still need an isolated end-to-end rehearsal.
-
+For a real recovery, stop application writers, stop the `ascendingmonk-backup.timer`, and ensure no `ascendingmonk-backup.service` run is active. Move the current database and any `-wal`, `-shm`, or `-journal` files to a timestamped quarantine path. Download or select a known-good backup, verify its SQLite integrity, restore it with correct ownership/permissions/SELinux context, ensure no old sidecar files remain beside it, and test login and key application functions.
 ### Reason for choice
 
 #### Reliability and maintainability
