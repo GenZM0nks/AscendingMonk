@@ -1334,6 +1334,117 @@ The service still uses HTTP on port `8080` to preserve existing behavior. We cou
 
 The current implementation deliberately favors a working, verifiable pipeline and a controlled migration over introducing all these features at once. 
 
+## 28/10/2026
+
+### Description of choice
+
+We implemented automated backups of AscendingMonk's SQLite database, with frequent local copies and separate copies in Azure Blob Storage. The goal is to recover from accidental deletion, corruption, or loss of the VM disk without routinely copying users' data to team members' laptops.
+
+#### Backup architecture
+
+| Layer | Schedule (UTC) | Retention |
+| --- | --- | --- |
+| Local SQLite snapshots | Every 15 minutes | Delete scheduled copies older than 24 hours |
+| Azure hourly uploads | Every hour at `:05` | Lifecycle deletion after more than 7 days |
+| Azure daily uploads | Daily at `00:10` | Lifecycle deletion after more than 30 days |
+| Azure blob/container soft delete | After deletion | 7-day recovery window, subject to Azure behavior |
+
+The approximate recovery-point target is 15 minutes when local backups survive, or one hour when relying on hourly cloud backups. These are targets, not guarantees; recovery time also depends on rebuilding the application.
+
+```text
+Live SQLite database
+    | sqlite3 .backup + integrity check
+    v
+Root-only local backup directory
+    |                  |
+    v                  v
+Azure hourly/       Azure daily/
+    \                  /
+     Azure lifecycle retention
+```
+
+The active database is `/var/lib/ascendingmonk/ascendingmonk_with_orig.db`. Backups are saved under `/var/backups/ascendingmonk` (directory mode `0700`, files mode `0600`). The scripts are:
+
+- `/usr/local/sbin/backup-ascendingmonk.sh`
+- `/usr/local/sbin/upload-ascendingmonk-azure.sh`
+- `/usr/local/sbin/upload-ascendingmonk-daily.sh`
+
+#### Implementation
+
+The local script uses SQLite's online `.backup` command, checks `PRAGMA integrity_check`, and moves a validated temporary file into place. `flock` prevents overlapping runs; restrictive permissions protect local copies. A representative core sequence is:
+
+```bash
+umask 077
+DB="/var/lib/ascendingmonk/ascendingmonk_with_orig.db"
+BACKUP_DIR="/var/backups/ascendingmonk"
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+TEMP="$BACKUP_DIR/.ascendingmonk-$TIMESTAMP.tmp"
+FINAL="$BACKUP_DIR/ascendingmonk-$TIMESTAMP.db"
+
+# The deployed script also acquires a flock lock and cleans up temporary files.
+sqlite3 -cmd ".timeout 10000" "$DB" ".backup '$TEMP'"
+test "$(sqlite3 "$TEMP" 'PRAGMA integrity_check;')" = "ok"
+mv -n -- "$TEMP" "$FINAL"
+find "$BACKUP_DIR" -maxdepth 1 -type f \
+  -name 'ascendingmonk-*.db' -mmin +1440 -delete
+```
+
+Systemd oneshot services and persistent timers run the three scripts. Their unit names are `ascendingmonk-backup`, `ascendingmonk-azure-upload`, and `ascendingmonk-azure-daily` (each with `.service` and `.timer` units). The cloud services wait for `network-online.target` and have a five-minute startup timeout.
+
+Cloud uploads select the newest local backup, authenticate with the VM's **system-assigned managed identity**, and upload without embedded storage keys:
+
+```bash
+# Illustrative excerpt; resource names are placeholders, not deployed identifiers.
+/usr/bin/az login --identity --output none
+/usr/bin/az storage blob upload \
+  --account-name examplebackupstorage \
+  --container-name database-backups \
+  --name "hourly/$DATE_UTC/$FILENAME" \
+  --file "$LATEST" --auth-mode login \
+  --overwrite false --only-show-errors --output none
+```
+
+The daily script uses the `daily/` prefix instead of `hourly/` and a separate lock. Both cloud scripts use `flock`. The excerpts above explain the implementation; they are **not complete standalone replacements** for the deployed scripts. Public documentation intentionally generalizes Azure identifiers.
+
+Azure storage is a private container with anonymous access disabled, restricted network access through the VM's virtual network/service endpoint, HTTPS/TLS 1.2, and Microsoft-managed encryption at rest. Storage account key access is disabled. The managed identity has container-scoped `Storage Blob Data Contributor`. Lifecycle rules remove older hourly and daily blobs asynchronously; soft delete can keep deleted copies recoverable for an additional seven days.
+
+#### Verification and recovery
+
+On **29 October 2026**, we confirmed eight consecutive 15-minute local backups, hourly cloud uploads, and the first unattended daily cloud upload. A downloaded cloud backup passed `PRAGMA integrity_check`, and its SHA-256 matched the corresponding local file. This verifies file-level recovery, **not** a full application restore. Actual lifecycle expiry has not yet been observed.
+
+Useful operational checks:
+
+```bash
+systemctl list-timers --all | grep ascendingmonk
+sudo journalctl -u ascendingmonk-backup.service -n 20 --no-pager
+sudo journalctl -u ascendingmonk-azure-upload.service -n 20 --no-pager
+sudo journalctl -u ascendingmonk-azure-daily.service -n 20 --no-pager
+```
+
+For a real recovery, stop application writers, stop the `ascendingmonk-backup.timer`, and ensure no `ascendingmonk-backup.service` run is active. Move the current database and any `-wal`, `-shm`, or `-journal` files to a timestamped quarantine path. Download or select a known-good backup, verify its SQLite integrity, restore it with correct ownership/permissions/SELinux context, ensure no old sidecar files remain beside it, and test login and key application functions.
+### Reason for choice
+
+#### Reliability and maintainability
+
+Local backups give frequent recovery points; Azure stores copies outside the VM disk. Systemd makes the process unattended, while SQLite's backup API and integrity checks reduce the chance of copying an inconsistent database. Automatic retention limits storage use and how long older personal data remains in backups.
+
+We considered SCP copies to personal laptops, but SCP only encrypts data **during transfer**. Protection after download would depend on each laptop's encryption, permissions, updates, and handling. Centralized Azure storage avoids distributing additional copies of the user database among teammates. An independent, encrypted offline backup could offer stronger isolation against some Azure/VM compromises, but adds complexity.
+
+#### Security, privacy, and accepted risks
+
+Backups are treated as **confidential user data**. Passwords are stored as bcrypt hashes, but bcrypt does not encrypt the SQLite database: usernames, emails, and other fields may remain readable, and exposed hashes could be attacked offline.
+
+Current protections include root-only local files, a private Azure container, managed identity rather than embedded credentials, container-scoped RBAC, network restrictions, TLS, encryption at rest, and seven-day soft delete. These controls do not prevent a sufficiently privileged identity from reading the database.
+
+**Accepted residual risk:** `Storage Blob Data Contributor` lets the VM's managed identity **read, modify, and delete** backups in the container. A compromised VM could therefore affect both local and cloud backups. Soft delete provides a limited recovery window, but is not immutable storage. We accept this trade-off for the current course project because the role is container-scoped and the configuration remains manageable. We should revisit it if the project handles more sensitive data or grows beyond the course, or after a security incident. Options include narrower permissions, immutability, or a separately controlled backup destination.
+
+Other limitations remain: there are no automatic failure alerts, a successful timer does not prove a successful backup, and a complete application restore has not been tested. Priorities for improvement are failure/staleness alerts, an isolated full restore drill, and periodic review of Azure access and retention.
+
+Deleting a user from the live database does not immediately remove them from existing backups. Backup expiry and applicable privacy obligations must therefore be considered. No real database files, personal data, tokens, storage keys, or SAS URLs should be committed to GitHub; `.gitignore` is only a secondary safeguard. Public examples use generic cloud resource identifiers.
+
+### How was this decided?
+
+The overall backup approach was discussed informally by the team before implementation. The detailed technical choices and configuration were made individually by the team member setting up the system. The changes were open to comments and suggestions from other team members in the pull request before merging.
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
