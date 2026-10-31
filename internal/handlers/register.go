@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/GenZM0nks/AscendingMonk/internal/session"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
@@ -60,7 +62,7 @@ func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Reque
 	password := requestPointer.FormValue("password")
 	password2 := requestPointer.FormValue("password2")
 
-	validationErrors, registerError := registerUser(
+	userID, validationErrors, registerError := registerUser(
 		username,
 		email,
 		password,
@@ -97,10 +99,20 @@ func RegisterPost(responseWriter http.ResponseWriter, requestPointer *http.Reque
 		return
 	}
 
+	tokenGenerationError := session.RegisterSession(responseWriter, userID)
+	if tokenGenerationError != nil {
+		http.Error(
+			responseWriter,
+			fmt.Sprintf("Failed to generate session- and/or CSRF tokens for a session for user \"%s\"\nError: %v", username, tokenGenerationError),
+			http.StatusInternalServerError,
+		)
+		return
+	}
+
 	http.Redirect(
 		responseWriter,
 		requestPointer,
-		"/login",
+		"/search",
 		http.StatusSeeOther,
 	)
 }
