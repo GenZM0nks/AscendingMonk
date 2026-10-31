@@ -1334,6 +1334,17 @@ The service still uses HTTP on port `8080` to preserve existing behavior. We cou
 
 The current implementation deliberately favors a working, verifiable pipeline and a controlled migration over introducing all these features at once. 
 
+## 31/10/2026
+### Description of choice
+Customer data was hacked on the 30th of October. We thus released a post-incident report (`docs/cyberattack.md`). In it, we chose to force users to change their passwords and to be wary of suspicious emails. We thus chose to revoke access to all accounts created before the release of the patch forcing users to change passwords. 
+### Reason for choice
+Forced password resets are mandatory if we are to believe that our users are in control of their own accounts. The guidance beyond that is to protect our users' information on the other platforms they use. 
+
+We chose to enforce the password reset programatically by keeping a separate table of `userId`s which keeps track of all users who had an account on the day the patch was released. When such a user tries to login, the login procedure returns an error after seeing that their ID is in the table of people who should change their passwords. This error is then shown to the user. If their ID is not in that table, the procedure happily logs in the user.
+
+Should we also modify the `users` table to take a createdAt-date to make such changes easier in the future? adding a new table for something unlikely is a little much. A single field like createdAt could perform the responsibility of that table and more without a join. We'll have to fiddle with the database anyway.
+### How was this decided?
+Plenary discussion on a draft pull request.
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
