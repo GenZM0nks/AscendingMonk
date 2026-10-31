@@ -4,8 +4,16 @@
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
+
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Monitor Go module dependencies
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Monitor GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
