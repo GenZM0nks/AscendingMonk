@@ -1463,3 +1463,49 @@ Max-Emil
 - The correct path would be `./...`, where the `...` portion tells `revive` that it should recurse from `.` (the current folder, i.e. the project root). In my own defense, `./...` occurs once near the bottom of the VERY long documentation page for `revive`, and does not explain what it does. This is a Go package path convention, where I assumed UNIX convention from previous experience with other programs.
 - Do not think that VSCode uses the default configuration you run in your terminal, even though that configuration is not visible in the `Go` tab of the output window in VSCode.
 - Don't code something novel while in a different class with active exercises. I knew this in advance but wanted to save time.
+
+## 29/10/2026
+
+### What happened?
+
+Our Azure VM became unresponsive. The website returned **HTTP 504 Gateway Timeout**, and SSH connections stopped responding. This happened during or shortly after experimenting with VS Code Remote SSH.
+
+The VM has only approximately **695 MiB of RAM**, so memory exhaustion was considered a possible cause. However, we could not confirm the exact cause because logs from the previous boot were unavailable.
+
+To recover the server, we:
+
+- Enabled Azure boot diagnostics and investigated the serial console.
+- Created a snapshot of the VM's OS disk before restarting it.
+- Restarted the VM, which restored SSH access and the website.
+- Verified that the database was unharmed
+- Removed the unused VS Code server installation.
+
+#### Addition of swap
+
+To reduce the risk of similar problems, we added **1 GiB of persistent swap space**.
+
+Swap allows Linux to temporarily use disk space when RAM is under pressure. We created `/swapfile`, restricted its permissions to `0600`, configured it to activate automatically on startup through `/etc/fstab`, and set `vm.swappiness=30`.
+
+The configuration can be checked using:
+
+```bash
+free -h
+swapon --show
+sysctl vm.swappiness
+```
+
+Swap provides additional breathing room on our small VM, but it is much slower than RAM and cannot guarantee that another outage will not occur.
+
+### Who wrote it (was behind it)?
+
+The incident was investigated and the recovery and swap configuration were carried out by Janus. The experiment that is suspected to be the cause was also made by Janus. This entry documents the investigation, actions taken, and remaining uncertainties for the rest of the team.
+
+### What did we learn?
+
+- **A 504 error does not necessarily mean the web application itself is broken.** The underlying VM or its resources may be responsible.
+- **Small VMs are sensitive to memory pressure.** Additional development tools, such as VS Code Remote SSH, may consume resources needed by the application.
+- **Preserving evidence matters.** Without logs from the previous boot, we could not determine the exact cause of the outage.
+- **Recovery should be cautious.** Taking a disk snapshot before restarting helped preserve a recovery option.
+- **Swap improves resilience but does not replace RAM.** If memory problems continue, we may need better monitoring, container resource limits, or a larger VM.
+
+The server has recovered and swap is configured, but the original root cause remains unconfirmed.
