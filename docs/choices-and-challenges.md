@@ -1444,7 +1444,7 @@ Deleting a user from the live database does not immediately remove them from exi
 
 ### How was this decided?
 
-The overall backup approach was discussed informally by the team before implementation. The detailed technical choices and configuration were made individually by the team member setting up the system. The changes are open to comments and suggestions from other team members in the pull request before merging. There was no formal vote on each implementation detail.
+The overall backup approach was discussed informally by the team before implementation. The detailed technical choices and configuration were made individually by the team member setting up the system. The changes were open to comments and suggestions from other team members in the pull request before merging.
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
