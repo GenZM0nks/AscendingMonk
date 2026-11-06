@@ -31,9 +31,13 @@ go.work.sum
 # .idea/
 # .vscode/
 
-# Database
+# SQLite databases and related files
 *.db
+*.db-*
 *.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
 
 # Local Docker image archives
 ascendingmonk-test-image.tar
