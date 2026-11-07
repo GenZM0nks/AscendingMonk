@@ -75,6 +75,12 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		return
 	}
 
+	for _, validationError := range validationErrors {
+		if validationError.Type == "security_error" {
+			http.Redirect(responseWriter, requestPointer, fmt.Sprintf("/users/%s/change-password", loginRequest.Username), http.StatusSeeOther)
+		}
+	}
+
 	if len(validationErrors) > 0 {
 		loginResponse := LoginResponse{
 			PageData: PageData{
