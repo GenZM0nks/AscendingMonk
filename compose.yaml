@@ -8,7 +8,9 @@ services:
       DB_PATH: /data/ascendingmonk.db
       COOKIE_SECURE: "false"
     volumes:
-      - ascendingmonk-local-data:/data
+      - type: bind
+        source: ../local_monk_db
+        target: /data
     expose:
       - "8080"
 
