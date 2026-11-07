@@ -51,7 +51,7 @@ func loginNavigationUser(t *testing.T, db *sql.DB) *http.Cookie {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := db.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", "navigation-user", "navigation@example.com", string(hash)); err != nil {
+	if _, err := db.Exec("INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)", "navigation-user", "navigation@example.com", string(hash), time.Now()); err != nil {
 		t.Fatal(err)
 	}
 

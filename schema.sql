@@ -4,12 +4,13 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
-  password TEXT NOT NULL
+  password TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL
 );
 
 -- Create a default user, The password is 'password' (MD5 hashed)
-INSERT INTO users (username, email, password) 
-    VALUES ('admin', 'keamonk1@stud.kea.dk', '5f4dcc3b5aa765d61d8327deb882cf99');
+INSERT INTO users (username, email, password, created_at) 
+    VALUES ('admin', 'keamonk1@stud.kea.dk', '5f4dcc3b5aa765d61d8327deb882cf99', '2026-11-07 11:47:48.826436688+01:00');
 
 
 CREATE TABLE IF NOT EXISTS pages (
