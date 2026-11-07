@@ -126,6 +126,8 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 		return
 	}
 
+	session.DropSession(requestPointer, responseWriter)
+
 	sessionRegistrationError := session.RegisterSession(responseWriter, userID)
 	if sessionRegistrationError != nil {
 		http.Error(
