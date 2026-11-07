@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -12,6 +13,8 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/session"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
+
+var cyberattackDatetime = time.Date(2026, 10, 30, 0, 0, 0, 0, time.Now().UTC().Location())
 
 // ServeLoginPage renders the Login page using the shared layout template
 //
@@ -72,6 +75,13 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 			http.StatusUnprocessableEntity,
 		)
 		return
+	}
+
+	for _, validationError := range validationErrors {
+		if validationError.Type == "security_error" {
+			http.Redirect(responseWriter, requestPointer, fmt.Sprintf("/users/%s/change-password", loginRequest.Username), http.StatusSeeOther)
+			return
+		}
 	}
 
 	if len(validationErrors) > 0 {
@@ -135,22 +145,11 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 		return nil, validationErrors, nil
 	}
 
-	sqlRowPointer := database.QueryRow("SELECT id, username, password FROM users WHERE username = ?", loginRequest.Username)
+	sqlRowPointer := database.QueryRow("SELECT id, username, password, created_at FROM users WHERE username = ?", loginRequest.Username)
 	foundUser := &LoginResult{}
-	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password)
+	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password, &foundUser.CreatedAt)
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, nil, loginError
-	}
-	if loginError == sql.ErrNoRows {
-		validationErrors = append(validationErrors, ValidationError{
-			Location: []any{"body", "username and password"},
-			Message:  "No user with the provided details exists",
-			Type:     "value_error",
-		})
-	}
-
-	if len(validationErrors) > 0 {
-		return nil, validationErrors, nil
 	}
 
 	hashError := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(loginRequest.Password))
@@ -164,6 +163,24 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
+		})
+	}
+
+	if loginError == sql.ErrNoRows {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username and password"},
+			Message:  "No user with the provided details exists",
+			Type:     "value_error",
+		})
+
+		return nil, validationErrors, nil
+	}
+
+	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"database", "account creation date"},
+			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
+			Type:     "security_error",
 		})
 	}
 
@@ -243,9 +260,10 @@ type LoginRequest struct {
 // LoginResult stores data from queries.
 // Allows us to extract all data when querying
 type LoginResult struct {
-	id       uint64
-	Username string
-	Password string
+	id        uint64
+	Username  string
+	Password  string
+	CreatedAt time.Time
 }
 
 // LoginResponse stores data that need to be sent back to the clients browser.

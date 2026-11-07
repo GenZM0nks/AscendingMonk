@@ -339,6 +339,62 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{username}/change-password": {
+            "get": {
+                "description": "Render the password changing template to show in the browser.",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Show change_password.html",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Redirect after successfully updating a password",
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "Pages"
+                ],
+                "summary": "Call PasswordChangeHandler",
+                "responses": {
+                    "303": {
+                        "description": "See Other"
+                    },
+                    "400": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/weather": {
             "get": {
                 "description": "Render the Weather template with a seven-day weather forecast for Copenhagen.",

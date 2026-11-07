@@ -52,6 +52,8 @@ func main() {
 	router.HandleFunc("GET /register", handlers.Register)
 	router.HandleFunc("POST /register", handlers.RegisterPost)
 	router.HandleFunc("GET /api/logout", handlers.APILogout)
+	router.HandleFunc("GET /users/{username}/change-password", handlers.PasswordChange)
+	router.HandleFunc("POST /users/{username}/change-password", handlers.PasswordChangePost)
 
 	staticFiles := http.FileServer(http.Dir("web/static"))
 	router.Handle("GET /static/", http.StripPrefix("/static/", staticFiles))
