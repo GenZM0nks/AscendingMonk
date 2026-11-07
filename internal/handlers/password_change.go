@@ -128,7 +128,17 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 		return
 	}
 
-	session.RegisterSession(responseWriter, userID)
+	sessionRegistrationError := session.RegisterSession(responseWriter, userID)
+	if sessionRegistrationError != nil {
+		http.Error(
+			responseWriter,
+			sessionRegistrationError.Error(),
+			http.StatusInternalServerError,
+		)
+
+		return
+	}
+
 	http.Redirect(responseWriter, requestPointer, "/", http.StatusSeeOther)
 }
 
