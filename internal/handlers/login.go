@@ -14,6 +14,8 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
 
+var cyberattackDatetime = time.Date(2026, 10, 30, 0, 0, 0, 0, time.Now().UTC().Location())
+
 // ServeLoginPage renders the Login page using the shared layout template
 //
 // @Summary Show login.html
@@ -78,6 +80,7 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	for _, validationError := range validationErrors {
 		if validationError.Type == "security_error" {
 			http.Redirect(responseWriter, requestPointer, fmt.Sprintf("/users/%s/change-password", loginRequest.Username), http.StatusSeeOther)
+			return
 		}
 	}
 
@@ -156,8 +159,7 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 		})
 	}
 
-	CyberattackDatetime := time.Date(2026, 10, 30, 0, 0, 0, 0, time.Now().Location())
-	if foundUser.CreatedAt.Compare(CyberattackDatetime) <= 0 { // Before or on date
+	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"database", "account creation date"},
 			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
