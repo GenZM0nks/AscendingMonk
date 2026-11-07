@@ -151,25 +151,6 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, nil, loginError
 	}
-	if loginError == sql.ErrNoRows {
-		validationErrors = append(validationErrors, ValidationError{
-			Location: []any{"body", "username and password"},
-			Message:  "No user with the provided details exists",
-			Type:     "value_error",
-		})
-	}
-
-	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
-		validationErrors = append(validationErrors, ValidationError{
-			Location: []any{"database", "account creation date"},
-			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
-			Type:     "security_error",
-		})
-	}
-
-	if len(validationErrors) > 0 {
-		return nil, validationErrors, nil
-	}
 
 	hashError := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(loginRequest.Password))
 
@@ -182,6 +163,24 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
+		})
+	}
+
+	if loginError == sql.ErrNoRows {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username and password"},
+			Message:  "No user with the provided details exists",
+			Type:     "value_error",
+		})
+
+		return nil, validationErrors, nil
+	}
+
+	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"database", "account creation date"},
+			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
+			Type:     "security_error",
 		})
 	}
 
