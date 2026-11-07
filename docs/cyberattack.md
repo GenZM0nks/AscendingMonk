@@ -14,4 +14,5 @@ Finally, **assume your email is exposed**, and known to other hackers too. Be on
   - We run these tests in different segments of our pipeline to catch errors before they ever get to affect you.
 - We have contacted the relevant authorities to bring the perpetrator to justice.
 ### What we will do
-- We will continuously look for ways to integrate security into our daily work, at all steps of the development process. 
+- We will be integrating a tool named Hadolint, that will doublecheck our docker configurations, with the hope of discovering other misconfigurations earlier, and thereby avoid a similar incident in the future. This improvment can be found on the public github projects kanban as issue #138 
+- We will continuously look for more ways to integrate security into our daily work, at all steps of the development process. 
