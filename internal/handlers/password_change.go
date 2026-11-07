@@ -62,6 +62,8 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 			"No value for path variable 'username' found",
 			http.StatusBadRequest,
 		)
+
+		return
 	}
 
 	var oldPassword string
@@ -74,6 +76,8 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 			"Failed to get old password from database.",
 			http.StatusInternalServerError,
 		)
+
+		return
 	}
 
 	var validator = BasePasswordValidator
@@ -106,6 +110,8 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 			passwordChangeError.Error(),
 			http.StatusInternalServerError,
 		)
+
+		return
 	}
 
 	var userID uint64
@@ -118,6 +124,8 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 			scanForIDError.Error(),
 			http.StatusInternalServerError,
 		)
+
+		return
 	}
 
 	session.RegisterSession(responseWriter, userID)
