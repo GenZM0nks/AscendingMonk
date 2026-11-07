@@ -126,7 +126,7 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 
 // UpdatePassword updates a valid password and updates CreatedAt to prevent
 // the requirement to change password again until the next attack.
-func UpdatePassword(username string, newPassword string) (err error) {
+func UpdatePassword(username, newPassword string) (err error) {
 	passwordHash, hashError := bcrypt.GenerateFromPassword(
 		[]byte(newPassword),
 		bcrypt.DefaultCost,
