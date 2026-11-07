@@ -1447,13 +1447,34 @@ Deleting a user from the live database does not immediately remove them from exi
 The overall backup approach was discussed informally by the team before implementation. The detailed technical choices and configuration were made individually by the team member setting up the system. The changes were open to comments and suggestions from other team members in the pull request before merging.
 ## 31/10/2026
 ### Description of choice
-Customer data was hacked on the 30th of October. We thus released a post-incident report (`docs/cyberattack.md`). In it, we chose to force users to change their passwords and to be wary of suspicious emails. We thus chose to revoke access to all accounts created before the release of the patch forcing users to change passwords. 
+Customer data was hacked on the 30th of October. We thus released a post-incident report (`docs/cyberattack.md`). In it, we chose to force users to change their passwords and to be wary of suspicious emails. We thus chose to revoke access to all accounts created before the release of the patch forcing users to change passwords.
 ### Reason for choice
-Forced password resets are mandatory if we are to believe that our users are in control of their own accounts. The guidance beyond that is to protect our users' information on the other platforms they use. 
+Forced password resets are mandatory if we are to believe that our users are in control of their own accounts. The guidance beyond that is to protect our users' information on the other platforms they use.
 
-We chose to enforce the password reset programatically by keeping a separate table of `userId`s which keeps track of all users who had an account on the day the patch was released. When such a user tries to login, the login procedure returns an error after seeing that their ID is in the table of people who should change their passwords. This error is then shown to the user. If their ID is not in that table, the procedure happily logs in the user.
+We chose to enforce the password reset programatically by creating a new column in the `users` table, `created_at`, which stores the latest date (and time) on which a password reset was formed, or when a user created their account. When such a user tries to login, the login procedure returns an error by comparing created_at with the date of the cyberattack. If the date on which the account's password was modified last is on the day of the attack or before, the user is redirected to a password change page, and an informative message is shown. If not, the user is logged in.
 
-Should we also modify the `users` table to take a createdAt-date to make such changes easier in the future? adding a new table for something unlikely is a little much. A single field like createdAt could perform the responsibility of that table and more without a join. We'll have to fiddle with the database anyway.
+We also implemented password validation for changing passwords with the following rules:
+1. A password is at least eight characters long,
+2. and contains at least one numeric digit,
+3. and contains at least one uppercase letter,
+4. and contains at least two special symbols,
+5. and is not equal to the old password.
+
+We chose this combination to enforce stronger passwords, which are difficult enough to remember to encourage the use of password managers, which would make for even stronger passwords which probably will not be reused, thus limiting damage whilst using this application and all others, hopefully. Note the last check doesn't keep track of all historical passwords, so one could change one's password to a new one, only to go back to the original password. If reliable evidence comes in that real users do this often, we must change our approach.
+As a technical side note, the pattern behind the validator is the strategy pattern for maximum flexibility in the future. This might be considered overkill, but it makes future modifications and extensions very easy.
+
+A post-incident report was chosen due to its relatively ubiquitous nature in industry, and also to maximize visibility among group members, who were to review and potentially modify the report with their suggestions. We answered the following questions in it:
+1. Describe the attack.
+    - When did it happen?
+    - Who is affected?
+    - (if applicable) Who may be behind it?
+    - What should those affected do?
+
+2. Statement on our commitment to secure software.
+
+This was chosen since it matches reports we've seen and gives our customers the information they need to act on their own. The technical solution then makes skirting the suggestions impossible, at least the one with changing passwords on our platform.
+
+Finally, the technical solution with password validation was kept from warning of weak passwords on login and in registration, though that could be implemented relatively easily.
 ### How was this decided?
 Plenary discussion on a draft pull request.
 
