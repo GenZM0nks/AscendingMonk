@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -135,9 +136,9 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 		return nil, validationErrors, nil
 	}
 
-	sqlRowPointer := database.QueryRow("SELECT id, username, password FROM users WHERE username = ?", loginRequest.Username)
+	sqlRowPointer := database.QueryRow("SELECT id, username, password, created_at FROM users WHERE username = ?", loginRequest.Username)
 	foundUser := &LoginResult{}
-	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password)
+	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password, &foundUser.CreatedAt)
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, nil, loginError
 	}
@@ -146,6 +147,15 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
+		})
+	}
+
+	CyberattackDatetime := time.Date(2026, 10, 30, 0, 0, 0, 0, time.Now().Location())
+	if foundUser.CreatedAt.Compare(CyberattackDatetime) <= 0 { // Before or on date
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"database", "account creation date"},
+			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
+			Type:     "security_error",
 		})
 	}
 
@@ -243,9 +253,10 @@ type LoginRequest struct {
 // LoginResult stores data from queries.
 // Allows us to extract all data when querying
 type LoginResult struct {
-	id       uint64
-	Username string
-	Password string
+	id        uint64
+	Username  string
+	Password  string
+	CreatedAt time.Time
 }
 
 // LoginResponse stores data that need to be sent back to the clients browser.
