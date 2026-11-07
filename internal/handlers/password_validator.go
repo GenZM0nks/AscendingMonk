@@ -25,13 +25,16 @@ type PasswordValidator struct {
 }
 
 // Validate applies validation rules in sequence on the password.
-func (v PasswordValidator) Validate(password string) error {
+func (v PasswordValidator) Validate(password string) []error {
+	var errors []error
+
 	for _, rule := range v.rules {
 		if err := rule.Validate(password); err != nil {
-			return err
+			errors = append(errors, err)
 		}
 	}
-	return nil
+
+	return errors
 }
 
 var (
