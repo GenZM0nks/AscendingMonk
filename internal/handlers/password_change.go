@@ -55,6 +55,7 @@ func PasswordChange(responseWriter http.ResponseWriter, requestPointer *http.Req
 // @Router /users/{username}/change-password [post]
 func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 	var newPassword = requestPointer.FormValue("password")
+	var currentPassword = requestPointer.FormValue("current-password")
 	var username = requestPointer.PathValue("username")
 
 	if username == "" {
@@ -71,13 +72,9 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	var oldPasswordRow = database.QueryRow("SELECT password FROM users WHERE username = ?", username)
 	getOldPasswordError := oldPasswordRow.Scan(&oldPassword)
 
-	if getOldPasswordError != nil {
-		http.Error(
-			responseWriter,
-			"Failed to get old password from database.",
-			http.StatusInternalServerError,
-		)
-
+	if getOldPasswordError != nil ||
+		bcrypt.CompareHashAndPassword([]byte(oldPassword), []byte(currentPassword)) != nil {
+		http.Error(responseWriter, "Invalid username or current password", http.StatusUnauthorized)
 		return
 	}
 
