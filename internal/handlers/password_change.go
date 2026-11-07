@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 	"time"
 
@@ -154,20 +155,16 @@ func UpdatePassword(username, newPassword string) (err error) {
 		return hashError
 	}
 
-	_, err = database.Execute(
-		"UPDATE users SET password = ? WHERE username = ?",
-		passwordHash, username)
+	result, err := database.Execute(
+		"UPDATE users SET password = ?, created_at = ? WHERE username = ?",
+		string(passwordHash), time.Now(), username)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = database.Execute(
-		"UPDATE users SET created_at = ? WHERE username = ?",
-		time.Now(), username)
-
-	if err != nil {
-		return err
+	if affected, _ := result.RowsAffected(); affected == 0 {
+		return sql.ErrNoRows
 	}
 
 	return nil
