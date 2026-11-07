@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"unicode"
 	"unicode/utf8"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // PasswordValidationRule encompasses a password validation rule.
@@ -81,6 +83,17 @@ var (
 		return fmt.Errorf("must contain at least 1 uppercase letter")
 	})
 )
+
+// DifferentFrom enforces that the old password must be different from the new one
+func DifferentFrom(oldHash []byte) PasswordValidationRule {
+	return PasswordRuleFunction(func(newPassword string) error {
+		if bcrypt.CompareHashAndPassword(oldHash, []byte(newPassword)) == nil {
+			return fmt.Errorf("new password must differ from the old password")
+		}
+
+		return nil
+	})
+}
 
 // BasePasswordValidator exposes a password validator which requires len > 8,
 // two special symbols, at least one capital letter and at least one number.
