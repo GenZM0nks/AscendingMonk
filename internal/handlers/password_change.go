@@ -107,7 +107,7 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	if passwordChangeError != nil {
 		http.Error(
 			responseWriter,
-			passwordChangeError.Error(),
+			"Failed to change the password.",
 			http.StatusInternalServerError,
 		)
 
@@ -121,7 +121,7 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	if scanForIDError != nil {
 		http.Error(
 			responseWriter,
-			scanForIDError.Error(),
+			"Failed to scan a userID.",
 			http.StatusInternalServerError,
 		)
 
@@ -132,7 +132,7 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	if sessionRegistrationError != nil {
 		http.Error(
 			responseWriter,
-			sessionRegistrationError.Error(),
+			"Failed to create a session.",
 			http.StatusInternalServerError,
 		)
 
