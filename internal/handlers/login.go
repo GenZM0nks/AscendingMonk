@@ -68,15 +68,6 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 	user, validationErrors, loginError := loginUser(loginRequest)
 
-	if loginError != nil {
-		http.Error(
-			responseWriter,
-			"Failed to login user",
-			http.StatusUnprocessableEntity,
-		)
-		return
-	}
-
 	for _, validationError := range validationErrors {
 		if validationError.Type == "security_error" {
 			http.Redirect(responseWriter, requestPointer, fmt.Sprintf("/users/%s/change-password", loginRequest.Username), http.StatusSeeOther)
@@ -100,6 +91,15 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 			responseWriter,
 		)
 
+		return
+	}
+
+	if loginError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to login user",
+			http.StatusUnprocessableEntity,
+		)
 		return
 	}
 
@@ -152,6 +152,16 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 		return nil, nil, loginError
 	}
 
+	if loginError == sql.ErrNoRows {
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"body", "username and password"},
+			Message:  "No user with the provided details exists",
+			Type:     "value_error",
+		})
+
+		return nil, validationErrors, nil
+	}
+
 	hashError := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(loginRequest.Password))
 
 	if (hashError != nil) && hashError != bcrypt.ErrMismatchedHashAndPassword {
@@ -161,19 +171,9 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	if hashError == bcrypt.ErrMismatchedHashAndPassword {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username and password"},
-			Message:  "No user with the provided details exists",
+			Message:  "Wrong password",
 			Type:     "value_error",
 		})
-	}
-
-	if loginError == sql.ErrNoRows {
-		validationErrors = append(validationErrors, ValidationError{
-			Location: []any{"body", "username and password"},
-			Message:  "No user with the provided details exists",
-			Type:     "value_error",
-		})
-
-		return nil, validationErrors, nil
 	}
 
 	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
