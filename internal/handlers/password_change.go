@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -71,33 +72,22 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	var oldPassword string
 	var oldPasswordRow = database.QueryRow("SELECT password FROM users WHERE username = ?", username)
 	getOldPasswordError := oldPasswordRow.Scan(&oldPassword)
+	var validationErrors []error
 
-	if getOldPasswordError != nil ||
-		bcrypt.CompareHashAndPassword([]byte(oldPassword), []byte(currentPassword)) != nil {
-		http.Error(responseWriter, "Invalid username or current password", http.StatusUnauthorized)
+	if getOldPasswordError != nil {
+		http.Error(responseWriter, "Fetching a password for the user went wrong", http.StatusInternalServerError)
 		return
+	}
+
+	if bcrypt.CompareHashAndPassword([]byte(oldPassword), []byte(currentPassword)) != nil {
+		validationErrors = append(validationErrors, fmt.Errorf("wrong current password"))
 	}
 
 	var validator = BasePasswordValidator
 	validator.rules = append(validator.rules, DifferentFrom([]byte(oldPassword)))
-	validationErrors := validator.Validate(newPassword)
+
 	if len(validationErrors) != 0 {
-		changePasswordResponse := ChangePasswordResponse{
-			PageData: PageData{
-				PageTitle:  "Change password",
-				Flashes:    nil,
-				IsLoggedIn: IsLoggedIn(requestPointer),
-			},
-			Errors:   validationErrors,
-			Username: username,
-		}
-
-		templates.LoadAndExecuteTemplate(
-			"web/templates/change_password.html",
-			changePasswordResponse,
-			responseWriter,
-		)
-
+		refreshPasswordChangeWithValidationErrors(validationErrors, username, requestPointer, responseWriter)
 		return
 	}
 
@@ -167,6 +157,24 @@ func UpdatePassword(username, newPassword string) (err error) {
 	}
 
 	return nil
+}
+
+func refreshPasswordChangeWithValidationErrors(validationErrors []error, username string, requestPointer *http.Request, responseWriter http.ResponseWriter) {
+	changePasswordResponse := ChangePasswordResponse{
+		PageData: PageData{
+			PageTitle:  "Change password",
+			Flashes:    nil,
+			IsLoggedIn: IsLoggedIn(requestPointer),
+		},
+		Errors:   validationErrors,
+		Username: username,
+	}
+
+	templates.LoadAndExecuteTemplate(
+		"web/templates/change_password.html",
+		changePasswordResponse,
+		responseWriter,
+	)
 }
 
 // ChangePasswordResponse passes validation data between the POST and GET
