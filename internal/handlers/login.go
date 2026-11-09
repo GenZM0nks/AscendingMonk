@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"path"
+	"slices"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -70,26 +70,38 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 	user, validationErrors, loginError := loginUser(loginRequest)
 
-	for _, validationError := range validationErrors {
-		if validationError.Type == "security_error" {
-			redirectURLString := "/users/%s/change-password"
-			redirectURL, err := url.Parse(redirectURLString)
+	hasSecurityError := false
+	hasOtherError := false
+	indexOfSecurityError := -1
 
-			if err != nil {
-				http.Error(
-					responseWriter,
-					"Failed to parse redirect url when updating password",
-					http.StatusInternalServerError,
-				)
-			}
-
-			cleanURL := path.Clean(redirectURL.Path)
-			http.Redirect(responseWriter, requestPointer, fmt.Sprintf(cleanURL, loginRequest.Username), http.StatusSeeOther)
-			return
+	for index, validationError := range validationErrors {
+		switch validationError.Type {
+		case "security_error":
+			hasSecurityError = true
+			indexOfSecurityError = index
+		default:
+			hasOtherError = true
 		}
 	}
 
-	if len(validationErrors) > 0 {
+	if hasSecurityError && !hasOtherError {
+		username := url.PathEscape(loginRequest.Username)
+
+		http.Redirect(
+			responseWriter,
+			requestPointer,
+			"/users/"+username+"/change-password",
+			http.StatusSeeOther,
+		)
+
+		return
+	}
+
+	if hasOtherError {
+		if hasSecurityError {
+			validationErrors = slices.Delete(validationErrors, indexOfSecurityError, indexOfSecurityError+1)
+		}
+
 		loginResponse := LoginResponse{
 			PageData: PageData{
 				PageTitle: "Login",
@@ -133,10 +145,9 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		"/",
 		http.StatusSeeOther,
 	)
-
 }
 
-func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, error) {
+func loginUser(loginRequest LoginRequest) (*UserData, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	if loginRequest.Username == "" {
@@ -160,7 +171,7 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	}
 
 	sqlRowPointer := database.QueryRow("SELECT id, username, password, created_at FROM users WHERE username = ?", loginRequest.Username)
-	foundUser := &LoginResult{}
+	foundUser := &UserData{}
 	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password, &foundUser.CreatedAt)
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, nil, loginError
@@ -193,7 +204,7 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"database", "account creation date"},
-			Message:  "You must update your password before being allowed to login again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
+			Message:  "You must update your password before being allowed to log in again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
 			Type:     "security_error",
 		})
 	}
@@ -271,9 +282,9 @@ type LoginRequest struct {
 	Password string
 }
 
-// LoginResult stores data from queries.
+// UserData stores data from queries.
 // Allows us to extract all data when querying
-type LoginResult struct {
+type UserData struct {
 	id        uint64
 	Username  string
 	Password  string

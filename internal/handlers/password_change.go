@@ -86,6 +86,10 @@ func PasswordChangePost(responseWriter http.ResponseWriter, requestPointer *http
 	var validator = BasePasswordValidator
 	validator.rules = append(validator.rules, DifferentFrom([]byte(oldPassword)))
 
+	for _, validationError := range validator.Validate(newPassword) {
+		validationErrors = append(validationErrors, validationError)
+	}
+
 	if len(validationErrors) != 0 {
 		refreshPasswordChangeWithValidationErrors(validationErrors, username, requestPointer, responseWriter)
 		return
