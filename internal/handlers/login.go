@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -70,7 +72,19 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 	for _, validationError := range validationErrors {
 		if validationError.Type == "security_error" {
-			http.Redirect(responseWriter, requestPointer, fmt.Sprintf("/users/%s/change-password", loginRequest.Username), http.StatusSeeOther)
+			redirectURLString := "/users/%s/change-password"
+			redirectURL, err := url.Parse(redirectURLString)
+
+			if err != nil {
+				http.Error(
+					responseWriter,
+					"Failed to parse redirect url when updating password",
+					http.StatusInternalServerError,
+				)
+			}
+
+			cleanURL := path.Clean(redirectURL.Path)
+			http.Redirect(responseWriter, requestPointer, fmt.Sprintf(cleanURL, loginRequest.Username), http.StatusSeeOther)
 			return
 		}
 	}
