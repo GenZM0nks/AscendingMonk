@@ -10,7 +10,7 @@ Yes
 ### Frederik
 
 ### Freje
-No
+No beacuse i would want gathering user feedback to be a more integrated part of the pipeline.
 
 ### Max
 No because we don't receive feedback from real users, nor do we have any. To get closer to a yes, we could enlist our student colleagues for feedback.
