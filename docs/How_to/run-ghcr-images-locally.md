@@ -26,6 +26,8 @@ Docker should display `Login Succeeded`.
 
 ## 2. Select the image version
 
+Find the image sha in GitHub Actions history, packages or on the deploy log on the Azure virtual machine.
+
 Set `IMAGE_SHA` to the full commit SHA corresponding to the published images:
 
 ```bash
