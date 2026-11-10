@@ -8,6 +8,7 @@
 Yes
 
 ### Frederik
+No - unless the simulation is considered real users
 
 ### Freje
 No beacuse i would want gathering user feedback to be a more integrated part of the pipeline.
@@ -21,6 +22,7 @@ No because we don't receive feedback from real users, nor do we have any. To get
 No
 
 ### Frederik
+No
 
 ### Freje
 No
@@ -34,6 +36,7 @@ No. I do not consider this important given the scope of the project and us not b
 Yes
 
 ### Frederik
+Yes
 
 ### Freje
 Yes
@@ -48,6 +51,7 @@ Yes - We use GitHub projects to register issues which are then prioritized and w
 No
 
 ### Frederik
+Yes - (manual deploy?)
 
 ### Freje
 No
@@ -61,6 +65,7 @@ Yes. The development is rather agile. Deployment allows for a bureaucratic proce
 Yes
 
 ### Frederik
+Yes
 
 ### Freje
 Yes
@@ -74,6 +79,7 @@ Yes. Given that we're delivering an exam project, we share an interest in delive
 Yes
 
 ### Frederik
+Yes
 
 ### Freje
 Yes
