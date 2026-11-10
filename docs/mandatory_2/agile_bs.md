@@ -10,6 +10,7 @@ Yes
 ### Frederik
 
 ### Freje
+No
 
 ### Max
 
@@ -21,6 +22,7 @@ No
 ### Frederik
 
 ### Freje
+No
 
 ### Max
 
@@ -32,6 +34,7 @@ Yes
 ### Frederik
 
 ### Freje
+Yes
 
 ### Max
 
@@ -44,6 +47,7 @@ No
 ### Frederik
 
 ### Freje
+No
 
 ### Max
 
@@ -55,6 +59,7 @@ Yes
 ### Frederik
 
 ### Freje
+Yes
 
 ### Max
 
@@ -66,6 +71,7 @@ Yes
 ### Frederik
 
 ### Freje
+Yes
 
 ### Max
 
