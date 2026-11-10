@@ -8,7 +8,7 @@
 Yes
 
 ### Frederik
-No - unless the simulation is considered real users
+No - unless the simulation is considered real users and weather report is us gathering feedback
 
 ### Freja
 No beacuse i would want gathering user feedback to be a more integrated part of the pipeline.
