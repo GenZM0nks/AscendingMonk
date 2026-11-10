@@ -1446,6 +1446,50 @@ Deleting a user from the live database does not immediately remove them from exi
 
 The overall backup approach was discussed informally by the team before implementation. The detailed technical choices and configuration were made individually by the team member setting up the system. The changes were open to comments and suggestions from other team members in the pull request before merging.
 
+
+## 09/11/2026
+
+### Description of choice
+
+We initially chose to use **Postman Cloud Monitors** to monitor the availability and functionality of our web application hosted on an Azure.
+
+The monitor runs automatically once per hour and sends email notifications to team members if a test fails. If tests fail 3 times in a row the emails will stop even if the problem has not been solved.
+
+We chose to monitor a single API endpoint that retrieves JSON data from the application. There is a limit on the amount of requests that can be made, so the challenge was to find a single suitable test to be able to test as often as possible.
+
+It was decided to use api/search with query parameters for a specific search string and language. The reason being that it involves the server handling the request and the database returning data to the server. That should give a good indication of a functional web app, even though it does not involve testing if the browser receives html.
+
+The monitor performs four tests as a post-script:
+
+- The HTTP response status is `200`.
+- The response time is below `3000 ms`.
+- The response is valid JSON.
+- The returned `data` array contains an object with the property `"Title": "Fortran"`.
+
+The monitoring is setup locally on a single team members computer. It is not shared in a team through Postman, because that puts further limits on the amount of testing.
+
+### Reason for choice
+
+Postman was already being used for API testing, so we could reuse our existing knowledge and tests.
+
+We chose a single endpoint that depends on the database because it allows us to check more than just whether the web server responds. By checking for expected data, we can also verify that an important part of the application's functionality is working.
+
+We chose hourly monitoring because it provides regular checks while keeping the number of monitored requests within Postman's free-tier allowance of 1,000 requests per month.
+
+Using one request per hour results in approximately 720 requests over 30 days.
+
+Email notifications allow team members to become aware of failures without having to check Postman manually.
+
+### How was this decided?
+
+The monitoring configuration was decided by the team member setting it up, but will have been going through pull request review and possibly adjusted through that process.
+
+The solution was tested using Postman's Collection Runner and subsequently verified using Postman Cloud Monitoring.
+
+During the initial cloud execution, the monitor failed because the collection variables were not shared with the cloud monitor. After correcting the variable configuration, all four tests passed.
+
+The initial failure also triggered an email notification, confirming that the alert mechanism worked. Team members were informed that this particular alert was caused by the initial configuration and could be ignored.
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
