@@ -1490,6 +1490,22 @@ During the initial cloud execution, the monitor failed because the collection va
 
 The initial failure also triggered an email notification, confirming that the alert mechanism worked. Team members were informed that this particular alert was caused by the initial configuration and could be ignored.
 
+## 10/11/2026
+### Description of choice
+We've set up `fail2ban` on our virtual machine.
+  
+### Reason for choice
+Inspecting the ssh security log under `/var/log/secure` revealed constant attempts to ssh into our virtual machine. Fail2ban addresses this by temporarily banning IP-addresses from trying to connect. The amount of time for which people are banned is adjustable. We configured it as follows:
+- IPs are banned for an hour
+  - One gets a new try after one hour. That is, one has a one hour window to attempt to log in three times before being banned. At the start of the next hour from the first attempt, one gains another try.
+- Localhost is always ignored (also the IPv6 variant of the address space)
+- Despite having SSH-configs set up on all the members' machines, we chose to set `maxretry=2`, that is, a client gets two tries to ssh into the VM before being banned. One could argue for 1 being appropriate, when all members have a working config set up, but if the server address ever changes, and one forgets to update a config, one would be banned for an hour, even though one was a legitimate actor acting in good faith. As such, we chose two tries, assuming the client notices the error and rechecks their configuration instead of retrying without delay.
+- We verified that our local jail configuration under `/etc/fail2ban/jail.local` was loaded after enabling the `fail2ban` service. In less than one minute, one actor was already jailed. Curiously, no one was banned after that for a long while (>30 min) - maybe the many actors we saw in the ssh logs were really one botnet. We verified that the correct configuration options were used with `sudo fail2ban-client get sshd <jail-config-option>`.
+
+"People" in jail (who are banned) will figure in the log under `/var/log/fail2ban.log`.
+### How was this decided?
+The implementing team member's discretion (Max).
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
