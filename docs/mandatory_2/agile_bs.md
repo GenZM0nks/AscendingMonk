@@ -10,7 +10,7 @@ Yes
 ### Frederik
 No - unless the simulation is considered real users
 
-### Freje
+### Freja
 No beacuse i would want gathering user feedback to be a more integrated part of the pipeline.
 
 ### Max
@@ -24,7 +24,7 @@ No
 ### Frederik
 No
 
-### Freje
+### Freja
 No
 
 ### Max
@@ -38,7 +38,7 @@ Yes
 ### Frederik
 Yes
 
-### Freje
+### Freja
 Yes
 
 ### Max
@@ -53,7 +53,7 @@ No
 ### Frederik
 Yes - (manual deploy?)
 
-### Freje
+### Freja
 No
 
 ### Max
@@ -67,7 +67,7 @@ Yes
 ### Frederik
 Yes
 
-### Freje
+### Freja
 Yes
 
 ### Max
@@ -81,7 +81,7 @@ Yes
 ### Frederik
 Yes
 
-### Freje
+### Freja
 Yes
 
 ### Max
