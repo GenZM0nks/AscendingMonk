@@ -5,7 +5,9 @@
 ## Are teams delivering working software to real users every iteration (incl. the first) and gathering feedback?
 
 ### Janus
-Yes
+Yes  
+This was not a hard yes, since it is hard to get real feedback from users, unless we take the position that Anders represents users that have actually used the app.
+
 
 ### Frederik
 No - unless the simulation is considered real users and weather report is us gathering feedback
@@ -19,7 +21,8 @@ No because we don't receive feedback from real users, nor do we have any. To get
 ## Is there a product charter laying out the mission strategic goals? Do all members of the team understand how they contribute?
 
 ### Janus
-No
+No  
+Not really a charter unless the milestones are considered such. How to contribute has not been very clear, we are still exploring how to work as a new team.
 
 ### Frederik
 No
@@ -33,7 +36,8 @@ No. I do not consider this important given the scope of the project and us not b
 ## Is feedback from users turned into concrete work items for sprint teams on timelines shorter than one month?
 
 ### Janus
-Yes
+Yes  
+Here I consider feedback from users being the two report we got from Anders.
 
 ### Frederik
 Yes
@@ -48,7 +52,8 @@ Yes - We use GitHub projects to register issues which are then prioritized and w
 
 
 ### Janus
-No
+No  
+It might be Agile in the way that we continuously receives surprises about new assignments and features. But our ability to adjust our approach as a team is still not very agile. 
 
 ### Frederik
 Yes - (manual deploy?)
@@ -62,7 +67,8 @@ Yes. The development is rather agile. Deployment allows for a bureaucratic proce
 ## Are teams empowered to change the requirements based on user feedback?
 
 ### Janus
-Yes
+Yes  
+Not only free to do, but required to do as this is a course.
 
 ### Frederik
 Yes
@@ -76,7 +82,8 @@ Yes. Given that we're delivering an exam project, we share an interest in delive
 ## Are teams empowered to change their process based on what they learn?
 
 ### Janus
-Yes
+Yes  
+We do try to adjust all the time, but empowered is a strong term.  
 
 ### Frederik
 Yes
