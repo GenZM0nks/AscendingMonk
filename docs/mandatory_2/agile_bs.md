@@ -9,7 +9,7 @@ Yes
 
 ### Frederik
 
-### Freje
+### Freja
 No beacuse i would want gathering user feedback to be a more integrated part of the pipeline.
 
 ### Max
@@ -22,7 +22,7 @@ No
 
 ### Frederik
 
-### Freje
+### Freja
 No
 
 ### Max
@@ -35,7 +35,7 @@ Yes
 
 ### Frederik
 
-### Freje
+### Freja
 Yes
 
 ### Max
@@ -49,7 +49,7 @@ No
 
 ### Frederik
 
-### Freje
+### Freja
 No
 
 ### Max
@@ -62,7 +62,7 @@ Yes
 
 ### Frederik
 
-### Freje
+### Freja
 Yes
 
 ### Max
@@ -75,7 +75,7 @@ Yes
 
 ### Frederik
 
-### Freje
+### Freja
 Yes
 
 ### Max
