@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"github.com/GenZM0nks/AscendingMonk/internal/handlers"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/net/html"
 )
 
 func TestSessionNavigation(t *testing.T) {
@@ -79,21 +81,64 @@ func loginNavigationUser(t *testing.T, db *sql.DB) *http.Cookie {
 func checkNavigation(t *testing.T, cookie *http.Cookie, loggedIn bool) {
 	t.Helper()
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
+
 	if cookie != nil {
 		request.AddCookie(cookie)
 	}
+
 	response := httptest.NewRecorder()
 	handlers.Search(response, request)
+
 	if response.Code != http.StatusOK {
 		t.Fatalf("page returned %d: %s", response.Code, response.Body.String())
 	}
-	for _, id := range []string{"nav-logout", "nav-weather", "nav-login", "nav-register"} {
-		want := loggedIn
-		if id == "nav-login" || id == "nav-register" {
-			want = !loggedIn
+
+	linksGotten, err := parseHTMLForNavLinkIDs(response.Body.String())
+
+	if err != nil {
+		t.Errorf("Failed to parse HTML")
+	}
+
+	publicNavLinks := [3]string{"nav-register", "nav-login", "nav-weather"}
+	privateNavLinks := [2]string{"nav-logout", "nav-weather"}
+	var want []string
+
+	if loggedIn {
+		want = publicNavLinks[:]
+	} else {
+		want = privateNavLinks[:]
+	}
+
+	if got := linksGotten; slices.Equal(got, want) {
+		t.Errorf("%v visible, want %v", got, want)
+	}
+}
+
+func parseHTMLForNavLinkIDs(HTML string) ([]string, error) {
+	doc, err := html.Parse(strings.NewReader(HTML))
+
+	if err != nil {
+		return nil, err
+	}
+
+	var ids []string
+	var walk func(*html.Node)
+
+	walk = func(n *html.Node) {
+		if n.Type == html.ElementNode && n.Data == "a" {
+			for _, attr := range n.Attr {
+				if attr.Key == "id" {
+					ids = append(ids, attr.Val)
+					break
+				}
+			}
 		}
-		if got := strings.Contains(response.Body.String(), `id="`+id+`"`); got != want {
-			t.Errorf("%s visible = %v, want %v", id, got, want)
+
+		for child := n.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
 		}
 	}
+
+	walk(doc)
+	return ids, nil
 }
