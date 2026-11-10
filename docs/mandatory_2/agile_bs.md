@@ -96,8 +96,8 @@ Yes. We discuss and reevaluate processes, particularly when pain points are touc
 
 # Plan to get closer to all yesses in the future
 
-When it comes to getting feedback from real users, it is would be impossible to get feedback from the simultaion other than wether the endpoints work. But we could show our work to unrelated people. When we have merged the enforcment of changing password for users with exposed credentials, we will ask our fellow students from devops to test our application, and comment their feedback. 
+When it comes to getting feedback from real users, it is would be impossible to get feedback from the simulation other than whether the endpoints work. But we could show our work to unrelated people. When we have merged the enforcement of changing passwords for users with exposed credentials, we will ask our fellow students from devops to test our application, and comment their feedback. 
 
-We have just recently started using priority labels again, which has helped in chocing the most important assignments. We will in future endure all issues have a priority label.
+We have just recently started using priority labels again, which has helped in chocing the most important assignments. We will in the future ensure that all issues have a priority label.
 
-It can also be hard to help larger pull request get done, because the work is not super visable (wat is being worked on now), for this issue it is of course best to use smaller pr's, but another solution is to break a parent issue into smaller issues, when it becomes to large, so other easily can see where they can help. To be proactive adding a template for dividing an issue, could help not block developers in bureaucracy
+It can also be hard to help larger pull requests get done, because the work is not super visible (what is being worked on now), for this issue it is of course best to use smaller PRs, but another solution is to break a parent issue into smaller issues when it becomes too large, so that others can easily see where they can help. To be proactive, adding a template for dividing an issue could help not block developers.
