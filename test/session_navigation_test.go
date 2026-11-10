@@ -100,13 +100,13 @@ func checkNavigation(t *testing.T, cookie *http.Cookie, loggedIn bool) {
 	}
 
 	publicNavLinks := [3]string{"nav-register", "nav-login", "nav-weather"}
-	privateNavLinks := publicNavLinks[:2]
+	privateNavLinks := [2]string{"nav-logout", "nav-weather"}
 	var want []string
 
 	if loggedIn {
-		want = publicNavLinks[:3]
+		want = publicNavLinks[:]
 	} else {
-		want = privateNavLinks
+		want = privateNavLinks[:]
 	}
 
 	if got := linksGotten; slices.Equal(got, want) {
