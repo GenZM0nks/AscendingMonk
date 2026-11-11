@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"slices"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -12,6 +15,8 @@ import (
 	"github.com/GenZM0nks/AscendingMonk/internal/session"
 	"github.com/GenZM0nks/AscendingMonk/internal/templates"
 )
+
+var cyberattackDatetime = time.Date(2026, 10, 30, 0, 0, 0, 0, time.Now().UTC().Location())
 
 // ServeLoginPage renders the Login page using the shared layout template
 //
@@ -65,16 +70,38 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 
 	user, validationErrors, loginError := loginUser(loginRequest)
 
-	if loginError != nil {
-		http.Error(
+	hasSecurityError := false
+	hasOtherError := false
+	indexOfSecurityError := -1
+
+	for index, validationError := range validationErrors {
+		switch validationError.Type {
+		case "security_error":
+			hasSecurityError = true
+			indexOfSecurityError = index
+		default:
+			hasOtherError = true
+		}
+	}
+
+	if hasSecurityError && !hasOtherError {
+		username := url.PathEscape(loginRequest.Username)
+
+		http.Redirect(
 			responseWriter,
-			"Failed to login user",
-			http.StatusUnprocessableEntity,
+			requestPointer,
+			"/users/"+username+"/change-password",
+			http.StatusSeeOther,
 		)
+
 		return
 	}
 
-	if len(validationErrors) > 0 {
+	if hasOtherError {
+		if hasSecurityError {
+			validationErrors = slices.Delete(validationErrors, indexOfSecurityError, indexOfSecurityError+1)
+		}
+
 		loginResponse := LoginResponse{
 			PageData: PageData{
 				PageTitle: "Login",
@@ -90,6 +117,15 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 			responseWriter,
 		)
 
+		return
+	}
+
+	if loginError != nil {
+		http.Error(
+			responseWriter,
+			"Failed to login user",
+			http.StatusUnprocessableEntity,
+		)
 		return
 	}
 
@@ -109,10 +145,9 @@ func Login(responseWriter http.ResponseWriter, requestPointer *http.Request) {
 		"/",
 		http.StatusSeeOther,
 	)
-
 }
 
-func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, error) {
+func loginUser(loginRequest LoginRequest) (*UserData, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	if loginRequest.Username == "" {
@@ -135,21 +170,20 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 		return nil, validationErrors, nil
 	}
 
-	sqlRowPointer := database.QueryRow("SELECT id, username, password FROM users WHERE username = ?", loginRequest.Username)
-	foundUser := &LoginResult{}
-	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password)
+	sqlRowPointer := database.QueryRow("SELECT id, username, password, created_at FROM users WHERE username = ?", loginRequest.Username)
+	foundUser := &UserData{}
+	loginError := sqlRowPointer.Scan(&foundUser.id, &foundUser.Username, &foundUser.Password, &foundUser.CreatedAt)
 	if loginError != nil && loginError != sql.ErrNoRows {
 		return nil, nil, loginError
 	}
+
 	if loginError == sql.ErrNoRows {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username and password"},
 			Message:  "No user with the provided details exists",
 			Type:     "value_error",
 		})
-	}
 
-	if len(validationErrors) > 0 {
 		return nil, validationErrors, nil
 	}
 
@@ -162,8 +196,16 @@ func loginUser(loginRequest LoginRequest) (*LoginResult, []ValidationError, erro
 	if hashError == bcrypt.ErrMismatchedHashAndPassword {
 		validationErrors = append(validationErrors, ValidationError{
 			Location: []any{"body", "username and password"},
-			Message:  "No user with the provided details exists",
+			Message:  "Wrong password",
 			Type:     "value_error",
+		})
+	}
+
+	if foundUser.CreatedAt.Compare(cyberattackDatetime) <= 0 { // Before or on date
+		validationErrors = append(validationErrors, ValidationError{
+			Location: []any{"database", "account creation date"},
+			Message:  "You must update your password before being allowed to log in again.\nSee the description of the cyberattack in your mail or in our documentation at [link].",
+			Type:     "security_error",
 		})
 	}
 
@@ -240,12 +282,13 @@ type LoginRequest struct {
 	Password string
 }
 
-// LoginResult stores data from queries.
+// UserData stores data from queries.
 // Allows us to extract all data when querying
-type LoginResult struct {
-	id       uint64
-	Username string
-	Password string
+type UserData struct {
+	id        uint64
+	Username  string
+	Password  string
+	CreatedAt time.Time
 }
 
 // LoginResponse stores data that need to be sent back to the clients browser.

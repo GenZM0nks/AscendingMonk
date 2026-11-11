@@ -132,6 +132,22 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 	return nil
 }
 
+// DropSession deletes session details if they exist
+func DropSession(requestPointer *http.Request, responseWriter http.ResponseWriter) {
+	token, err := requestPointer.Cookie("session_token") // Currently ignores if there's no token
+	if err == nil {
+		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.Value)
+		http.SetCookie(responseWriter, &http.Cookie{
+			Name:     "session_token",
+			Value:    "",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   true,
+			Path:     "/", // Should ensure that the session token is sent for all endpoints
+		})
+	}
+}
+
 type sessionData struct {
 	id           uint64
 	sessionValue string
