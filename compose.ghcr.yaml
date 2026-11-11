@@ -1,0 +1,21 @@
+
+services:
+  ascendingmonk:
+    user: "995:994"
+    image: ghcr.io/genzm0nks/ascendingmonk:sha-${IMAGE_SHA:?IMAGE_SHA must be set}
+    environment:
+      DB_PATH: /data/ascendingmonk.db
+      COOKIE_SECURE: "false"
+    volumes:
+      - type: bind
+        source: ../local_monk_db
+        target: /data
+    expose:
+      - "8080"
+
+  nginx:
+    image: ghcr.io/genzm0nks/ascendingmonk-nginx:sha-${IMAGE_SHA:?IMAGE_SHA must be set}
+    ports:
+      - "127.0.0.1:18081:80"
+    depends_on:
+      - ascendingmonk

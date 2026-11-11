@@ -1478,6 +1478,79 @@ Finally, the technical solution with password validation was kept from warning o
 ### How was this decided?
 Plenary discussion on a draft pull request.
 
+
+## 09/11/2026
+
+### Description of choice
+
+We initially chose to use **Postman Cloud Monitors** to monitor the availability and functionality of our web application hosted on an Azure.
+
+The monitor runs automatically once per hour and sends email notifications to team members if a test fails. If tests fail 3 times in a row the emails will stop even if the problem has not been solved.
+
+We chose to monitor a single API endpoint that retrieves JSON data from the application. There is a limit on the amount of requests that can be made, so the challenge was to find a single suitable test to be able to test as often as possible.
+
+It was decided to use api/search with query parameters for a specific search string and language. The reason being that it involves the server handling the request and the database returning data to the server. That should give a good indication of a functional web app, even though it does not involve testing if the browser receives html.
+
+The monitor performs four tests as a post-script:
+
+- The HTTP response status is `200`.
+- The response time is below `3000 ms`.
+- The response is valid JSON.
+- The returned `data` array contains an object with the property `"Title": "Fortran"`.
+
+The monitoring is setup locally on a single team members computer. It is not shared in a team through Postman, because that puts further limits on the amount of testing.
+
+### Reason for choice
+
+Postman was already being used for API testing, so we could reuse our existing knowledge and tests.
+
+We chose a single endpoint that depends on the database because it allows us to check more than just whether the web server responds. By checking for expected data, we can also verify that an important part of the application's functionality is working.
+
+We chose hourly monitoring because it provides regular checks while keeping the number of monitored requests within Postman's free-tier allowance of 1,000 requests per month.
+
+Using one request per hour results in approximately 720 requests over 30 days.
+
+Email notifications allow team members to become aware of failures without having to check Postman manually.
+
+### How was this decided?
+
+The monitoring configuration was decided by the team member setting it up, but will have been going through pull request review and possibly adjusted through that process.
+
+The solution was tested using Postman's Collection Runner and subsequently verified using Postman Cloud Monitoring.
+
+During the initial cloud execution, the monitor failed because the collection variables were not shared with the cloud monitor. After correcting the variable configuration, all four tests passed.
+
+The initial failure also triggered an email notification, confirming that the alert mechanism worked. Team members were informed that this particular alert was caused by the initial configuration and could be ignored.
+
+## 10/11/2026
+### Description of choice
+We've set up `fail2ban` on our virtual machine.
+  
+### Reason for choice
+Inspecting the ssh security log under `/var/log/secure` revealed constant attempts to ssh into our virtual machine. Fail2ban addresses this by temporarily banning IP-addresses from trying to connect. The amount of time for which people are banned is adjustable. We configured it as follows:
+- IPs are banned for an hour
+  - One gets a new try after one hour. That is, one has a one hour window to attempt to log in two times before being banned. At the start of the next hour from the first attempt, one gains another try.
+- Localhost is always ignored (also the IPv6 variant of the address space)
+- Despite having SSH-configs set up on all the members' machines, we chose to set `maxretry=2`, that is, a client gets two tries to ssh into the VM before being banned. One could argue for 1 being appropriate, when all members have a working config set up, but if the server address ever changes, and one forgets to update a config, one would be banned for an hour, even though one was a legitimate actor acting in good faith. As such, we chose two tries, assuming the client notices the error and rechecks their configuration instead of retrying without delay.
+- We verified that our local jail configuration under `/etc/fail2ban/jail.local` was loaded after enabling the `fail2ban` service. In less than one minute, one actor was already jailed. Curiously, no one was banned after that for a long while (>30 min) - maybe the many actors we saw in the ssh logs were really one botnet. We verified that the correct configuration options were used with `sudo fail2ban-client get sshd <jail-config-option>`.
+
+The config:
+```
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1
+bantime = 3600
+findtime = 3600
+maxretry = 2
+
+[sshd]
+enabled = true
+port = ssh
+```
+
+"People" in jail (who are banned) will figure in the log under `/var/log/fail2ban.log`.
+### How was this decided?
+The implementing team member's discretion (Max).
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
