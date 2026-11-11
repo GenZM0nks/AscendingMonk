@@ -101,7 +101,7 @@ func RegisterSession(responseWriter http.ResponseWriter, userID uint64) error {
 			retry = false
 		}
 
-		registerRetries++
+		tries++
 	}
 
 	// If we escape the above scope and retry is still true,
