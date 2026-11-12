@@ -1,0 +1,24 @@
+name: Convention change
+description: Propose a change to project-wide conventions or standards.
+title: "[Convention]: "
+labels: ["Convention"]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What convention should change, and what should it become?
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Why would this change help the project?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and migration
+      description: What files, workflows, or contributors would be affected by implementing this change and how?
