@@ -16,16 +16,15 @@ docker run -e LOG_LEVEL=DEBUG \
  --rm ghcr.io/super-linter/super-linter:latest@sha256:acc7cc64c938cb76c7239f2a862674cdc0078776f280bdd6bb6802c693e0cf3b
 docker_status=$?
 
-echo $docker_status
-
-if [ "$docker_status" -eq 0 ]; then
-  echo "[INFO]: SUCCES?"
+if [ "$docker_status" -ne 0 ]; then
+  if [ "$docker_status" -eq 125 ]; then
+    echo "[INFO]: The docker daemon responded with an error (Docker desktop may not be running)"
+  elif [ "$docker_status" -eq 126 ]; then
+    echo "[INFO]: A docker command within superlint.sh could not be invoked"
+  elif [ "$docker_status" -eq 127 ]; then
+    echo "[INFO]: A docker command within superlint.sh could not be found or does not exist"
+  fi
+  echo "[FATAL]: Docker exited code $docker_status"
 fi
-if [ "$docker_status" -eq 125 ]; then
-  echo "[INFO]: The docker daemon responded with an error (Docker desktop may not be running)"
-elif [ "$docker_status" -eq 126 ]; then
-  echo "[INFO]: A docker command within superlint.sh could not be invoked"
-elif [ "$docker_status" -eq 127 ]; then
-  echo "[INFO]: A docker command within superlint.sh could not be found or does not exist"
-fi
-
+echo "[INFO]: Linter succesfully Completed"
+exit $docker_status
