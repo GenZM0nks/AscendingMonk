@@ -11,7 +11,7 @@ if [ "$lint_status" -ne 0 ]; then
     echo "Linting failed. Commit rejected."
     exit "$lint_status"
 fi
-
+# test
 superlint_file=$(find ../ -name superlint.sh)
 echo $superlint_file
 
