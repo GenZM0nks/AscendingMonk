@@ -4,7 +4,7 @@
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # The abuslute repository path should be found, no matter where inside the repository the file is placed
-repo_dir="$(cd "${script_dir}" && git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)" || {
+repo_dir="$(cd "${script_dir}" && git rev-parse --show-toplevel 2>/dev/null)" || {
   echo "[FATAL]: Script is not inside a valid git repository." >&2
   exit 1
 }
@@ -19,7 +19,7 @@ fi
 
 if docker run -e LOG_LEVEL=DEBUG \
  -e RUN_LOCAL=true \
- --env-file "$(dirname "$repo_dir")/.github/super-linter.env" \
+ --env-file "$repo_dir/.github/super-linter.env" \
  -v "${repo_dir}"://tmp/lint \
  --rm ghcr.io/super-linter/super-linter:latest@sha256:acc7cc64c938cb76c7239f2a862674cdc0078776f280bdd6bb6802c693e0cf3b; then
   echo "[INFO]: Linter has succesfully Completed"
