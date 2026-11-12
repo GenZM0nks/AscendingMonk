@@ -12,4 +12,7 @@ if [ "$lint_status" -ne 0 ]; then
     exit "$lint_status"
 fi
 
+superlint_file=$(find ../ -name superlint.sh)
+echo $superlint_file
+
 exit 0
