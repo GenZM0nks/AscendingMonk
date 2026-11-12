@@ -12,8 +12,8 @@ repo_dir="$(cd "${script_dir}" && git rev-parse --show-toplevel 2>/dev/null)" ||
 docker run -e LOG_LEVEL=DEBUG \
  -e RUN_LOCAL=true \
  -e DEFAULT_BRANCH=main \
- -v "$(pwd)"://tmp/lint \
- --rm ghcr.io/super-linter/super-linter:latest@sha256:acc7cc64c938cb76c7239f2a862674cdc0078776f280bdd6bb6802c693e0cf3b 
+ -v "${repo_dir}"://tmp/lint \
+ --rm ghcr.io/super-linter/super-linter:latest@sha256:acc7cc64c938cb76c7239f2a862674cdc0078776f280bdd6bb6802c693e0cf3b
 docker_status=$?
 
 echo $docker_status
