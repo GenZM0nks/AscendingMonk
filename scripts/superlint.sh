@@ -19,7 +19,7 @@ fi
 
 if docker run -e LOG_LEVEL=DEBUG \
  -e RUN_LOCAL=true \
- -e DEFAULT_BRANCH=main \
+ --env-file "$(dirname "$repo_dir")/.github/super-linter.env" \
  -v "${repo_dir}"://tmp/lint \
  --rm ghcr.io/super-linter/super-linter:latest@sha256:acc7cc64c938cb76c7239f2a862674cdc0078776f280bdd6bb6802c693e0cf3b; then
   echo "[INFO]: Linter has succesfully Completed"
