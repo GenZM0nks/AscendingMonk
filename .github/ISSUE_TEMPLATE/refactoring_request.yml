@@ -1,0 +1,41 @@
+name: Refactoring
+description: Propose an internal code or architecture improvement without changing intended behavior.
+title: "[Refactor]: "
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: area
+    attributes:
+      label: Code or component
+      description: Which part of the project should be refactored?
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Current pain point
+      description: What makes the current implementation difficult to maintain, understand, or extend?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed refactor
+      description: Describe the change you suggest.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Behavior to preserve
+      description: Note any existing behavior, interfaces, or compatibility requirements that must remain unchanged.
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing or acceptance criteria
+      description: How should we verify that the refactor is complete and behavior is preserved?
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add related issues, examples, or design notes.
