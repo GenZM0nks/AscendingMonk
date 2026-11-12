@@ -131,7 +131,7 @@ show_comments() {
 
   awk -F '\t' -v wanted="$deployment_id" '
     $1 == "C" && $2 == wanted && NF >= 6 {
-      printf "    COMMENT_ID %s (%s): %s\n", $3, $5, substr($0, index($0, $6))
+      printf "    COMMENT_ID %s (%s): %s\n", $3, $5, $6
     }
     $1 == "I" && $2 == wanted && NF >= 4 {
       printf "    info: %s\n", substr($0, index($0, $4))
