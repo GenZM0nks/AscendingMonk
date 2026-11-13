@@ -3,7 +3,7 @@ module github.com/GenZM0nks/AscendingMonk
 go 1.26.0
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.52
+	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/swaggo/swag v1.16.6
 	golang.org/x/crypto v0.57.0
 	golang.org/x/net v0.58.0
