@@ -32,24 +32,33 @@ record_deployment() {
   local deployment_id previous_id
 
   if [[ -e "$DEPLOY_LOG" && ! -f "$DEPLOY_LOG" ]]; then
-    echo "Error: deployment log is not a regular file: $DEPLOY_LOG" >&2
-    exit 1
+    echo "Warning: deployment log is not a regular file: $DEPLOY_LOG." >&2
+    return 0
   fi
 
-  mkdir -p "$(dirname "$DEPLOY_LOG")"
-  touch "$DEPLOY_LOG"
+  if ! mkdir -p "$(dirname "$DEPLOY_LOG")" ||
+    ! touch "$DEPLOY_LOG"; then
+    echo "Warning: could not prepare deployment log: $DEPLOY_LOG." >&2
+    return 0
+  fi
 
-  deployment_id="$(
+  if ! deployment_id="$(
     awk -F '\t' '
       $1 == "D" && $2 ~ /^[0-9]+$/ && $2 > highest { highest = $2 }
       END { print highest + 1 }
     ' "$DEPLOY_LOG"
-  )"
+  )"; then
+    echo "Warning: could not read deployment log: $DEPLOY_LOG." >&2
+    return 0
+  fi
 
-  printf 'D\t%s\t%s\t%s\n' \
+  if ! printf 'D\t%s\t%s\t%s\n' \
     "$deployment_id" \
     "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-    "$IMAGE_SHA" >> "$DEPLOY_LOG"
+    "$IMAGE_SHA" >> "$DEPLOY_LOG"; then
+    echo "Warning: could not record successful deployment in $DEPLOY_LOG." >&2
+    return 0
+  fi
 
   previous_id="$(
     awk -F '\t' -v wanted="$IMAGE_SHA" -v current="$deployment_id" \
@@ -58,10 +67,13 @@ record_deployment() {
   )"
 
   if [[ -n "$previous_id" ]]; then
-    printf 'I\t%s\t%s\tSHA previously deployed as DEPLOY_ID %s\n' \
+    if ! printf 'I\t%s\t%s\tSHA previously deployed as DEPLOY_ID %s\n' \
       "$deployment_id" \
       "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
-      "$previous_id" >> "$DEPLOY_LOG"
+      "$previous_id" >> "$DEPLOY_LOG"; then
+      echo "Warning: could not record repeated-SHA information in $DEPLOY_LOG." >&2
+      return 0
+    fi
     echo "Informational note added: SHA was previously deployed as DEPLOY_ID $previous_id."
   fi
 
@@ -177,12 +189,13 @@ done
 
 echo "Checking application health..."
 
-HEALTH_URL="http://127.0.0.1:8080/"
+HEALTH_URL="https://ascendingmonk.dk/"
 HEALTH_ATTEMPTS=12
 HEALTH_DELAY=5
 
 for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
   if curl --fail --silent --show-error \
+    --resolve ascendingmonk.dk:443:127.0.0.1 \
     --max-time 5 \
     --output /dev/null \
     "$HEALTH_URL"; then
