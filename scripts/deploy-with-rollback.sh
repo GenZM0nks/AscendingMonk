@@ -54,6 +54,12 @@ append_event() {
     "$status" >> "$DEPLOY_LOG"
 }
 
+try_append_event() {
+  if ! append_event "$@"; then
+    echo "Warning: could not write deployment event to $DEPLOY_LOG." >&2
+  fi
+}
+
 previous_successful_sha() {
   awk -F '\t' '
     $1 == "D" && NF >= 4 { sha = $4 }
@@ -72,15 +78,15 @@ run_deploy() {
 }
 
 PREVIOUS_SHA="$(previous_successful_sha)"
-append_event "A" "$IMAGE_SHA" "STARTED"
+try_append_event "A" "$IMAGE_SHA" "STARTED"
 
 echo "Deploying SHA $IMAGE_SHA."
 if run_deploy "$IMAGE_SHA"; then
-  append_event "S" "$IMAGE_SHA" "DEPLOYMENT_SUCCEEDED"
+  try_append_event "S" "$IMAGE_SHA" "DEPLOYMENT_SUCCEEDED"
   exit 0
 fi
 
-append_event "F" "$IMAGE_SHA" "DEPLOYMENT_FAILED"
+try_append_event "F" "$IMAGE_SHA" "DEPLOYMENT_FAILED"
 echo "Deployment failed for SHA $IMAGE_SHA." >&2
 
 if [[ -z "$PREVIOUS_SHA" ]]; then
@@ -89,14 +95,14 @@ if [[ -z "$PREVIOUS_SHA" ]]; then
 fi
 
 echo "Rolling back to previous successful SHA $PREVIOUS_SHA."
-append_event "R" "$PREVIOUS_SHA" "ROLLBACK_STARTED"
+try_append_event "R" "$PREVIOUS_SHA" "ROLLBACK_STARTED"
 
 if run_deploy "$PREVIOUS_SHA"; then
-  append_event "R" "$PREVIOUS_SHA" "ROLLBACK_SUCCEEDED"
+  try_append_event "R" "$PREVIOUS_SHA" "ROLLBACK_SUCCEEDED"
   echo "Rollback succeeded for SHA $PREVIOUS_SHA." >&2
   exit 1
 fi
 
-append_event "R" "$PREVIOUS_SHA" "ROLLBACK_FAILED"
+try_append_event "R" "$PREVIOUS_SHA" "ROLLBACK_FAILED"
 echo "Error: rollback failed for SHA $PREVIOUS_SHA." >&2
 exit 1
