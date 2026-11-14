@@ -177,12 +177,13 @@ done
 
 echo "Checking application health..."
 
-HEALTH_URL="http://127.0.0.1:8080/"
+HEALTH_URL="https://ascendingmonk.dk/"
 HEALTH_ATTEMPTS=12
 HEALTH_DELAY=5
 
 for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
   if curl --fail --silent --show-error \
+    --resolve ascendingmonk.dk:443:127.0.0.1 \
     --max-time 5 \
     --output /dev/null \
     "$HEALTH_URL"; then

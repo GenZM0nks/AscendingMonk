@@ -120,4 +120,4 @@ jobs:
             -o StrictHostKeyChecking=yes \
             -o BatchMode=yes \
             "monkdeploy@$AZURE_SSH_HOST" \
-            "sudo -n /opt/ascendingmonk-deploy/deploy.sh $IMAGE_SHA"
+            "sudo -n /opt/ascendingmonk-deploy/deploy-with-rollback.sh $IMAGE_SHA"
