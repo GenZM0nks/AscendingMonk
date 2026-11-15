@@ -13,6 +13,6 @@ if [ "$lint_status" -ne 0 ]; then
 fi
 # test
 #superlint_file=$(find ../ -name superlint.sh)
-./.../scripts/superlint.sh
+./scripts/superlint.sh
 
 exit 0
