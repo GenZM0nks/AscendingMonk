@@ -90,8 +90,15 @@ previous_successful_sha() {
 
 run_deploy() {
   local sha="$1"
+  local recovery="${2:-0}"
 
-  ASCENDINGMONK_DEPLOY_LOCK_HELD=1 "$DEPLOY_SCRIPT" "$sha"
+  if [[ "$recovery" == "1" ]]; then
+    ASCENDINGMONK_DEPLOY_LOCK_HELD=1 \
+      ASCENDINGMONK_RECOVERY=1 \
+      "$DEPLOY_SCRIPT" "$sha"
+  else
+    ASCENDINGMONK_DEPLOY_LOCK_HELD=1 "$DEPLOY_SCRIPT" "$sha"
+  fi
 }
 
 PREVIOUS_SHA="$(previous_successful_sha)"
@@ -118,7 +125,7 @@ fi
 echo "Rolling back to previous successful SHA $PREVIOUS_SHA."
 try_append_event "R" "$PREVIOUS_SHA" "ROLLBACK_STARTED"
 
-if run_deploy "$PREVIOUS_SHA"; then
+if run_deploy "$PREVIOUS_SHA" 1; then
   try_append_event "R" "$PREVIOUS_SHA" "ROLLBACK_SUCCEEDED"
   echo "Rollback succeeded for SHA $PREVIOUS_SHA." >&2
   exit 1

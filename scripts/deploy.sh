@@ -54,7 +54,14 @@ fi
 record_deployment() {
   local deployment_id previous_id
 
-  require_healthy_log
+  if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+    if [[ ! -f "$DEPLOY_LOG" || ! -r "$DEPLOY_LOG" || ! -w "$DEPLOY_LOG" ]]; then
+      echo "Warning: deployment log unavailable during recovery; restoration will continue." >&2
+      return 0
+    fi
+  else
+    require_healthy_log
+  fi
 
   if ! deployment_id="$(
     awk -F '\t' '
@@ -62,6 +69,11 @@ record_deployment() {
       END { print highest + 1 }
     ' "$DEPLOY_LOG"
   )"; then
+    if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+      echo "Warning: could not read deployment log during recovery." >&2
+      return 0
+    fi
+
     echo "Error: could not read deployment log: $DEPLOY_LOG." >&2
     return 1
   fi
@@ -70,6 +82,11 @@ record_deployment() {
     "$deployment_id" \
     "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
     "$IMAGE_SHA" >> "$DEPLOY_LOG"; then
+    if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+      echo "Warning: could not record recovery deployment in $DEPLOY_LOG." >&2
+      return 0
+    fi
+
     echo "Error: could not record successful deployment in $DEPLOY_LOG." >&2
     return 1
   fi
@@ -85,6 +102,11 @@ record_deployment() {
       "$deployment_id" \
       "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
       "$previous_id" >> "$DEPLOY_LOG"; then
+      if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+        echo "Warning: could not record repeated-SHA information during recovery." >&2
+        return 0
+      fi
+
       echo "Error: could not record repeated-SHA information in $DEPLOY_LOG." >&2
       return 1
     fi
@@ -94,7 +116,9 @@ record_deployment() {
   echo "Recorded successful deployment as DEPLOY_ID $deployment_id."
 }
 
-require_healthy_log
+if [[ "${ASCENDINGMONK_RECOVERY:-0}" != "1" ]]; then
+  require_healthy_log
+fi
 
 echo "Validating release: $IMAGE_SHA"
 
