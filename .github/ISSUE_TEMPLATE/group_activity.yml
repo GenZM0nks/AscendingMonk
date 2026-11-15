@@ -1,0 +1,66 @@
+name: Group activity
+description: Plan a discussion, tool trial, or other activity that everyone in the group will take part in.
+title: "[Group activity]: "
+labels: ["group-activity"]
+body:
+  - type: textarea
+    id: activity
+    attributes:
+      label: What are we doing?
+      description: Describe the discussion, tool trial, or other group activity.
+      placeholder: What do we want to discuss, try, or explore?
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Why are we doing it?
+      description: What question, need, or goal prompted this activity?
+    validations:
+      required: false
+
+  - type: textarea
+    id: participation
+    attributes:
+      label: What will each group member do?
+      description: Give every member a clear contribution.
+      placeholder: |
+        - Frederik:
+        - Freja:
+        - Janus:
+        - Max-Emil:
+    validations:
+      required: false
+
+  - type: textarea
+    id: plan
+    attributes:
+      label: How will we do it?
+      description: Add a rough plan, prompts, materials, or tool links if useful.
+    validations:
+      required: false
+
+  - type: textarea
+    id: capture
+    attributes:
+      label: What should we capture?
+      description: For example, decisions, observations, questions, or next steps.
+    validations:
+      required: false
+
+  - type: input
+    id: when-where
+    attributes:
+      label: When / where?
+      description: Add a date, meeting, or other useful context.
+    validations:
+      required: false
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: Fill this in after the activity. What did we learn or decide?
+    validations:
+      required: false

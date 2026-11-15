@@ -1,0 +1,50 @@
+name: CI/CD change request
+description: Request a change to continuous integration or deployment workflows.
+title: "[CI/CD]: "
+labels: ["CI/CD"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or goal
+      description: What issue should this change address, or what outcome are you aiming for?
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Affected workflow or environment
+      description: Identify the workflow, job, deployment environment, or pipeline involved.
+      placeholder: |
+        Workflow:
+        Job:
+        Environment:
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the CI/CD change you’re requesting.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Note expected effects on build time, reliability, deployments, or developer workflows.
+  - type: textarea
+    id: safeguards
+    attributes:
+      label: Security and reliability considerations
+      description: Mention permissions, secrets, approvals, rollback needs, or other safeguards to consider.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will we know the change is complete?
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add relevant logs, links, or related issues. Do not include secret values or credentials.

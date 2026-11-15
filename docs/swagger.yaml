@@ -302,6 +302,43 @@ paths:
       summary: Show register.html
       tags:
       - Pages
+  /users/{username}/change-password:
+    get:
+      description: Render the password changing template to show in the browser.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: error
+          schema:
+            type: string
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Show change_password.html
+      tags:
+      - Pages
+    post:
+      description: Redirect after successfully updating a password
+      produces:
+      - text/html
+      responses:
+        "303":
+          description: See Other
+        "400":
+          description: error
+          schema:
+            type: string
+        "500":
+          description: error
+          schema:
+            type: string
+      summary: Call PasswordChangeHandler
+      tags:
+      - Pages
   /weather:
     get:
       description: Render the Weather template with a seven-day weather forecast for

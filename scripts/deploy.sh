@@ -3,6 +3,8 @@ set -euo pipefail
 
 DEPLOY_DIR=/opt/ascendingmonk-deploy
 COMPOSE_FILE="$DEPLOY_DIR/compose.prod.yaml"
+LOCK_FILE=/run/lock/ascendingmonk-deploy.lock
+DEPLOY_LOG=/var/log/ascendingmonk/deployments.log
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: deploy.sh <40-character Git commit SHA>" >&2
@@ -17,6 +19,54 @@ if [[ ! "$IMAGE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
 fi
 
 export IMAGE_SHA
+
+if [[ "${ASCENDINGMONK_DEPLOY_LOCK_HELD:-0}" != "1" ]]; then
+  exec 9>"$LOCK_FILE"
+  if ! flock -n 9; then
+    echo "Error: another deployment, rollback, or comment operation is already running." >&2
+    exit 1
+  fi
+fi
+
+record_deployment() {
+  local deployment_id previous_id
+
+  if [[ -e "$DEPLOY_LOG" && ! -f "$DEPLOY_LOG" ]]; then
+    echo "Error: deployment log is not a regular file: $DEPLOY_LOG" >&2
+    exit 1
+  fi
+
+  mkdir -p "$(dirname "$DEPLOY_LOG")"
+  touch "$DEPLOY_LOG"
+
+  deployment_id="$(
+    awk -F '\t' '
+      $1 == "D" && $2 ~ /^[0-9]+$/ && $2 > highest { highest = $2 }
+      END { print highest + 1 }
+    ' "$DEPLOY_LOG"
+  )"
+
+  printf 'D\t%s\t%s\t%s\n' \
+    "$deployment_id" \
+    "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+    "$IMAGE_SHA" >> "$DEPLOY_LOG"
+
+  previous_id="$(
+    awk -F '\t' -v wanted="$IMAGE_SHA" -v current="$deployment_id" \
+      '$1 == "D" && $4 == wanted && $2 != current { print $2; exit }' \
+      "$DEPLOY_LOG"
+  )"
+
+  if [[ -n "$previous_id" ]]; then
+    printf 'I\t%s\t%s\tSHA previously deployed as DEPLOY_ID %s\n' \
+      "$deployment_id" \
+      "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+      "$previous_id" >> "$DEPLOY_LOG"
+    echo "Informational note added: SHA was previously deployed as DEPLOY_ID $previous_id."
+  fi
+
+  echo "Recorded successful deployment as DEPLOY_ID $deployment_id."
+}
 
 echo "Validating release: $IMAGE_SHA"
 
@@ -137,6 +187,7 @@ for ((attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++)); do
     --output /dev/null \
     "$HEALTH_URL"; then
     echo "Health check passed."
+    record_deployment
     exit 0
   fi
 
