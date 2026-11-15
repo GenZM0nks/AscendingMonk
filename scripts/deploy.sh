@@ -20,6 +20,29 @@ fi
 
 export IMAGE_SHA
 
+require_healthy_log() {
+  if [[ ! -f "$DEPLOY_LOG" ]]; then
+    echo "Error: deployment log is missing: $DEPLOY_LOG" >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
+
+  if [[ ! -r "$DEPLOY_LOG" || ! -w "$DEPLOY_LOG" ]]; then
+    echo "Error: deployment log is not readable and writable: $DEPLOY_LOG" >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
+
+  if ! awk -F '\t' '
+    $1 == "D" && $2 ~ /^[0-9]+$/ && $4 ~ /^[0-9a-f]{40}$/ { found = 1 }
+    END { exit(found ? 0 : 1) }
+  ' "$DEPLOY_LOG"; then
+    echo "Error: deployment log has no valid successful deployment record." >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
+}
+
 if [[ "${ASCENDINGMONK_DEPLOY_LOCK_HELD:-0}" != "1" ]]; then
   exec 9>"$LOCK_FILE"
   if ! flock -n 9; then
@@ -31,16 +54,7 @@ fi
 record_deployment() {
   local deployment_id previous_id
 
-  if [[ -e "$DEPLOY_LOG" && ! -f "$DEPLOY_LOG" ]]; then
-    echo "Warning: deployment log is not a regular file: $DEPLOY_LOG." >&2
-    return 0
-  fi
-
-  if ! mkdir -p "$(dirname "$DEPLOY_LOG")" ||
-    ! touch "$DEPLOY_LOG"; then
-    echo "Warning: could not prepare deployment log: $DEPLOY_LOG." >&2
-    return 0
-  fi
+  require_healthy_log
 
   if ! deployment_id="$(
     awk -F '\t' '
@@ -48,16 +62,16 @@ record_deployment() {
       END { print highest + 1 }
     ' "$DEPLOY_LOG"
   )"; then
-    echo "Warning: could not read deployment log: $DEPLOY_LOG." >&2
-    return 0
+    echo "Error: could not read deployment log: $DEPLOY_LOG." >&2
+    return 1
   fi
 
   if ! printf 'D\t%s\t%s\t%s\n' \
     "$deployment_id" \
     "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
     "$IMAGE_SHA" >> "$DEPLOY_LOG"; then
-    echo "Warning: could not record successful deployment in $DEPLOY_LOG." >&2
-    return 0
+    echo "Error: could not record successful deployment in $DEPLOY_LOG." >&2
+    return 1
   fi
 
   previous_id="$(
@@ -71,14 +85,16 @@ record_deployment() {
       "$deployment_id" \
       "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
       "$previous_id" >> "$DEPLOY_LOG"; then
-      echo "Warning: could not record repeated-SHA information in $DEPLOY_LOG." >&2
-      return 0
+      echo "Error: could not record repeated-SHA information in $DEPLOY_LOG." >&2
+      return 1
     fi
     echo "Informational note added: SHA was previously deployed as DEPLOY_ID $previous_id."
   fi
 
   echo "Recorded successful deployment as DEPLOY_ID $deployment_id."
 }
+
+require_healthy_log
 
 echo "Validating release: $IMAGE_SHA"
 

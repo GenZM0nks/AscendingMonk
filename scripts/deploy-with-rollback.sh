@@ -24,13 +24,30 @@ if [[ ! -x "$DEPLOY_SCRIPT" ]]; then
   exit 1
 fi
 
-if [[ -e "$DEPLOY_LOG" && ! -f "$DEPLOY_LOG" ]]; then
-  echo "Error: deployment log is not a regular file: $DEPLOY_LOG" >&2
-  exit 1
-fi
+require_healthy_log() {
+  if [[ ! -f "$DEPLOY_LOG" ]]; then
+    echo "Error: deployment log is missing: $DEPLOY_LOG" >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
 
-mkdir -p "$(dirname "$DEPLOY_LOG")"
-touch "$DEPLOY_LOG"
+  if [[ ! -r "$DEPLOY_LOG" || ! -w "$DEPLOY_LOG" ]]; then
+    echo "Error: deployment log is not readable and writable: $DEPLOY_LOG" >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
+
+  if ! awk -F '\t' '
+    $1 == "D" && $2 ~ /^[0-9]+$/ && $4 ~ /^[0-9a-f]{40}$/ { found = 1 }
+    END { exit(found ? 0 : 1) }
+  ' "$DEPLOY_LOG"; then
+    echo "Error: deployment log has no valid successful deployment record." >&2
+    echo "Deployment aborted before images were pulled." >&2
+    exit 1
+  fi
+}
+
+require_healthy_log
 
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
@@ -62,7 +79,7 @@ try_append_event() {
 
 previous_successful_sha() {
   awk -F '\t' '
-    $1 == "D" && NF >= 4 { sha = $4 }
+    $1 == "D" && $2 ~ /^[0-9]+$/ && $4 ~ /^[0-9a-f]{40}$/ { sha = $4 }
     END {
       if (sha != "") {
         print sha
@@ -78,7 +95,11 @@ run_deploy() {
 }
 
 PREVIOUS_SHA="$(previous_successful_sha)"
-try_append_event "A" "$IMAGE_SHA" "STARTED"
+if ! append_event "A" "$IMAGE_SHA" "STARTED"; then
+  echo "Error: could not record the deployment attempt in $DEPLOY_LOG." >&2
+  echo "Deployment aborted before images were pulled." >&2
+  exit 1
+fi
 
 echo "Deploying SHA $IMAGE_SHA."
 if run_deploy "$IMAGE_SHA"; then
