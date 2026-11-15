@@ -1,0 +1,61 @@
+name: Super-Linter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  IGNORE_GITIGNORED_FILES: true # Don't lint things not in the remote repo.
+  VALIDATE_ALL_CODEBASE: false # Check only PR changes.
+  VALIDATE_BASH: true # Setting validate_<lang> sets linting 
+  # for all others to false by default, so we don't try to lint
+  # languages we don't use. Add new languages to the map here.
+  VALIDATE_CSS: true
+  VALIDATE_CSS_PRETTIER: true # Checks formatting.
+  VALIDATE_DOCKERFILE_HADOLINT: true
+  VALIDATE_GITHUB_ACTIONS: true
+  VALIDATE_GO: true
+  VALIDATE_GO_MODULES: true
+  VALIDATE_HTML: true
+  VALIDATE_HTML_PRETTIER: true # Like ..._CSS_PRETTIER
+  VALIDATE_JSON: true
+  VALIDATE_JSON_PRETTIER: true
+  VALIDATE_MARKDOWN: true
+  VALIDATE_MARKDOWN_PRETTIER: true
+  VALIDATE_OPENAPI: true
+  VALIDATE_SHELL_SHFMT: true
+  VALIDATE_SQLFLUFF: true # Lints SQL
+  VALIDATE_YAML: true
+
+jobs:
+  build:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    permissions:
+      # To lint
+      contents: read
+      packages: read
+      # issues and pull-requests permissions to write results as pull
+      # request comments.
+      issues: write
+      pull-requests: write
+      # To report GitHub Actions status checks.
+      statuses: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Super-linter
+        uses: super-linter/super-linter@v9.0.0
+        env:
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
