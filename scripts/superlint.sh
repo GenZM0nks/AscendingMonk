@@ -3,7 +3,7 @@
 # Script must be inside git repo to work (which should always be true, since the script is provided in the github repository)
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# The abuslute repository path should be found, no matter where inside the repository the file is placed
+# The absolute repository path should be found, no matter where inside the repository the file is placed
 repo_dir="$(cd "${script_dir}" && git rev-parse --show-toplevel 2>/dev/null)" || {
   echo "[FATAL]: Script is not inside a valid git repository." >&2
   exit 1
@@ -13,8 +13,8 @@ if docker info 1>/dev/null 2>&1; then
   echo "[INFO]: Docker deamon is running"
 else
   docker_status=$?
-  echo "[FATAL]: Docker daemon could no be reached. (Docker desktop must be running, for the script to succesfully run)"
-  exit 1
+  echo "[FATAL]: Docker daemon could not be reached. Docker exited status $docker_status. (Docker desktop must be running, for the script to succesfully run)"
+  exit "$docker_status"
 fi
 
 if docker run -e LOG_LEVEL=INFO \
