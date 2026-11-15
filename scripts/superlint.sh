@@ -17,7 +17,7 @@ else
   exit 1
 fi
 
-if docker run -e LOG_LEVEL=DEBUG \
+if docker run -e LOG_LEVEL=INFO \
  -e RUN_LOCAL=true \
  --env-file "$repo_dir/.github/super-linter.env" \
  -v "${repo_dir}"://tmp/lint \
