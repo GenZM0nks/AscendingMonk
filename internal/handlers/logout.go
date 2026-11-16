@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/GenZM0nks/AscendingMonk/internal/database"
+	"github.com/GenZM0nks/AscendingMonk/internal/session"
 )
 
 // APILogout handles logging out users on /api/logout.
@@ -16,19 +16,7 @@ import (
 // @Tags API
 // @Router /api/logout [get]
 func APILogout(responseWriter http.ResponseWriter, request *http.Request) {
-	token, err := request.Cookie("session_token") // Currently ignores if there's no token
-	if err == nil {
-		database.Execute("DELETE FROM session_tokens WHERE session_value = ?", token.Value)
-		http.SetCookie(responseWriter, &http.Cookie{
-			Name:     "session_token",
-			Value:    "",
-			MaxAge:   -1,
-			HttpOnly: true,
-			Secure:   true,
-			Path:     "/", // Should ensure that the session token is sent for all endpoints
-		})
-	}
-
+	session.DropSession(request, responseWriter)
 	http.Redirect(responseWriter, request, "/", http.StatusSeeOther)
 }
 

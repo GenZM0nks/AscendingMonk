@@ -1,0 +1,41 @@
+name: Security report
+description: Report a potential security issue. Avoid sharing sensitive details publicly.
+title: "[Security]: "
+labels: ["security"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not include exploit steps, secrets, personal data, or other sensitive details in a public issue.**
+        Please write to sec@ascendingmonks.dk for these.
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have not included sensitive details that could enable misuse.
+          required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: High-level summary
+      description: Briefly describe the potential security concern without sensitive reproduction details.
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential impact
+      description: Describe the affected component and possible impact at a high level. Who is affected and what do they stand to lose if this were exploited?
+    validations:
+      required: true
+  - type: input
+    id: affected_versions
+    attributes:
+      label: Affected versions
+      description: Include known affected versions, if applicable.
+  - type: textarea
+    id: contact
+    attributes:
+      label: Safe follow-up
+      description: Provide a non-sensitive way to coordinate privately, if available.
