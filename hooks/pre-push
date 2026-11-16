@@ -17,9 +17,9 @@ superlint_status=$?
 
 if [ "$superlint_status" -ne 0 ]; then
     if [ "$superlint_status" -eq 2 ]; then
-        echo "Super linting failed. Commit rejected."
+        echo "Super linting failed. push rejected."
     else
-        echo "Super linting script failed. Commit rejected."
+        echo "Super linting script failed. push rejected."
     fi
     echo "$superlint_msg"
     exit "$superlint_status"
