@@ -1614,3 +1614,26 @@ The incident was investigated and the recovery and swap configuration were carri
 - **Swap improves resilience but does not replace RAM.** If memory problems continue, we may need better monitoring, container resource limits, or a larger VM.
 
 The server has recovered and swap is configured, but the original root cause remains unconfirmed.
+
+## 11/11/2026
+### What happened?
+For a number of weeks, we have encountered a strange issue with conditional rendering of navigation links, seemingly only present on the VM. Upon login with valid credentials, local versions would perform conditional rendering of nav links correctly on all pages, but not on the container running on the VM. This led to delays in deploying new code, which was still being written and delivered. As such, debugging on the VM was in order, but we approached it in a way which wasted much time. At least in this context. Another two factors leading to delays was general business and that I (Max-Emil) was averse to the task of performing the debugging remotely and thus also procrastinated, to be completely honest. 
+
+The root cause was a configuration mismatch. Changes to `compose.prod.yaml` in the repository had to be manually replicated in the VM’s copy of the Compose file. The VM’s file was missing the COOKIE_SECURE environment-variable declaration, which was present in the repository.
+
+Because I had previously seen similar symptoms caused by session-handling logic, I initially focused on the session logic and possibly the database. Rather than first comparing the last working commit with the earliest failing one, I jumped into debugging, setting up tools, and writing guides for others. Some of that work was useful, but it delayed identifying the configuration mismatch.
+
+Testing the latest image locally did not reproduce the issue. Nor did running the latest code locally with the repository’s production Compose file. That Compose file included the relevant configuration, so those tests did not match the VM’s setup. The Compose file had been updated as part of PR #120, which redirected users from registration to search rather than to login. The issue appeared after that change, but the difference between the repository and VM configuration was the cause.
+
+In retrospect, comparing the deployment configuration, or the last working and first failing versions, might have surfaced the mismatch much earlier. Competing work and my reluctance to debug remotely also contributed to the delay.
+
+### What did we learn?
+- As soon as something goes wrong on the VM related to the application:
+  1. Find the commit which broke something. Consider what functionality this bug involves from its behavior and your knowledge of the system.
+  2. Diff the latest working commit and the earliest failing one and look for likely suspects.
+  3. If that didn't reveal anything, try to recreate and debug the problem locally, ideally with the production container or the production compose file.
+  4. If that didn't work, start debugging on the VM. Keep `/var/lib/ascendingmonk` and `/opt/ascendingmonk-deploy` in mind if it may be due to configuration issues.
+- We need a visible way to call out for help, or to request that others work on something of high priority. An Andon cord strategy could work. The Andon cord should work the way we were taught it should work in lectures, i.e. anyone can pull it, after which work stops, colleagues pool together and work on the problem. This could be done through Teams or by updating the README on GitHub with an enormous header. This is not an ideal way of doing it in real life, but probably a good way for us to do it, with our mismatched, busy schedules.
+- The production container running fine locally but not doing so on the VM is an indication that we may be dealing with a configuration issue on the VM. Check it.
+- We should update the PR template with a new checkbox in the pre-merge checks section with label: "Did you change any of `compose.prod.yaml`, `scripts/deploy.sh`
+`scripts/Makefile`, `scripts/rollback.sh`? If so, remember to update the VM's version." until we find a way to deploy it with each deployment, which is more reliable.
