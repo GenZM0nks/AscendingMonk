@@ -16,9 +16,18 @@ services:
   nginx:
     image: ghcr.io/genzm0nks/ascendingmonk-nginx:sha-${IMAGE_SHA:?IMAGE_SHA must be set}
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt/live/ascendingmonk.dk:/etc/letsencrypt/live/ascendingmonk.dk:ro
+      - /etc/letsencrypt/archive/ascendingmonk.dk:/etc/letsencrypt/archive/ascendingmonk.dk:ro
+      - /var/log/nginx:/var/log/nginx
     depends_on:
       - ascendingmonk
-    volumes:
-      - /var/log/nginx:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
