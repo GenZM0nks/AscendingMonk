@@ -1,0 +1,85 @@
+name: CI Playwright smoke tests
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      BASE_URL: http://127.0.0.1:8080
+      TEST_USERNAME: ci-smoke-user
+      TEST_EMAIL: ci-smoke-user@example.invalid
+      TEST_PASSWORD: aA!4bH_j
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.1.0
+
+      - name: Create fake database
+        id: fake-database
+        run: |
+          DB_DIR="$(mktemp -d)"
+          echo "db_dir=$DB_DIR" >> "$GITHUB_OUTPUT"
+          sqlite3 "$DB_DIR/test.db" < schema.sql
+
+      - name: Start application
+        env:
+          DB_HOST_DIR: ${{ steps.fake-database.outputs.db_dir }}
+          DB_PATH: /data/test.db
+        run: docker compose up -d
+
+      - name: Register fake user
+        run: |
+          payload="$(jq -n \
+            --arg username "$TEST_USERNAME" \
+            --arg email "$TEST_EMAIL" \
+            --arg password "$TEST_PASSWORD" \
+            '{username: $username, email: $email, password: $password}')"
+
+          ready=false
+          for i in {1..30}; do
+            if curl --silent --fail "$BASE_URL/" >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" != true ]; then
+            echo "Application did not become ready"
+            exit 1
+          fi
+
+          curl --silent --show-error --fail-with-body \
+            --retry 5 \
+            --retry-delay 1 \
+            --retry-max-time 30 \
+            --request POST "$BASE_URL/register" \
+            --header 'Content-Type: application/json' \
+            --data "$payload"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: Run Playwright
+        run: npx playwright test
+
+      - name: Clean up
+        if: always()
+        env:
+          DB_DIR: ${{ steps.fake-database.outputs.db_dir }}
+        run: |
+          docker compose down --volumes --remove-orphans || true
+          if [ -n "$DB_DIR" ]; then rm -rf -- "$DB_DIR"; fi
