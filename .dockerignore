@@ -23,3 +23,10 @@ ascendingmonk
 # Generated OpenAPI specifications
 docs/swagger.yaml
 docs/swagger.json
+
+# Playwright
+node_modules/
+package-lock.json
+package.json
+playwright.config.ts
+test/e2e/
