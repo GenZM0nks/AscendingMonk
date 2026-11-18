@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"golang.org/x/crypto/bcrypt"
@@ -118,10 +119,11 @@ func registerUser(
 	}
 
 	result, databaseError := database.Execute(
-		"INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+		"INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)",
 		username,
 		email,
 		string(passwordHash),
+		time.Now().UTC(),
 	)
 
 	if databaseError != nil {
