@@ -35,7 +35,7 @@
   });
 
   function makeSearchRequest() {
-    const query = searchInput.value;
+    const query = searchInput.value.trim();
     const url = new URL(window.location.href);
     url.searchParams.set('q', query);
     window.location.href = url.toString();
