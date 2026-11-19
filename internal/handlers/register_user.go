@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/GenZM0nks/AscendingMonk/internal/database"
 	"golang.org/x/crypto/bcrypt"
@@ -12,12 +13,7 @@ import (
 // Validation problems are returned as []ValidationError.
 // Unexpected problems, such as database or hashing failures,
 // are returned as error
-func registerUser(
-	username string,
-	email string,
-	password string,
-	password2 string,
-) (uint64, []ValidationError, error) {
+func registerUser(username, email, password, password2 string,) (uint64, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	// Check required fields.
@@ -118,10 +114,11 @@ func registerUser(
 	}
 
 	result, databaseError := database.Execute(
-		"INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+		"INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, ?)",
 		username,
 		email,
 		string(passwordHash),
+		time.Now().UTC(),
 	)
 
 	if databaseError != nil {
