@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-umask 177
+umask 077
 
 backup_file=""
 USERCOUNT_LOG=/var/log/ascendingmonk/usercount.csv # for testing have a test folder inside script and use "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/test/usercount.csv" 
@@ -29,9 +29,9 @@ cleanup_all () {
 
 skip () {
     if [[ -n "$backup_filename" && -n "$backup_date" ]]; then
-        echo "Warning: $1 for $backup_filename from $backup_date"
+        echo "Warning: $1 for $backup_filename from $backup_date" >&2
     else
-        echo "Warning: $1 for unkown backup file and date"
+        echo "Warning: $1 for unkown backup file and date" >&2
     fi
     cleanup_backup
 }
@@ -70,7 +70,7 @@ do
     backup_filename=$(cut -d/ -f3 <<<"$backup_blob")
     backup_file="$DB_BLOB_DIR/$backup_filename"
     if ! az storage blob download --account-name examplebackupstorage --container-name database-backups --name "$backup_blob" --file "$backup_file" --auth-mode login --overwrite false --only-show-errors --output none; then
-        echo "Warning: Failed to retrive azure storage blob: $backup_filename"
+        skip "failed to retrive azure storage blob: $backup_filename"
         continue
     fi
     if [[ "$(sqlite3 "$backup_file" "PRAGMA integrity_check";)" != "ok" ]]; then
