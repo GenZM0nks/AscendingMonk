@@ -13,12 +13,7 @@ import (
 // Validation problems are returned as []ValidationError.
 // Unexpected problems, such as database or hashing failures,
 // are returned as error
-func registerUser(
-	username string,
-	email string,
-	password string,
-	password2 string,
-) (uint64, []ValidationError, error) {
+func registerUser(username, email, password, password2 string,) (uint64, []ValidationError, error) {
 	validationErrors := []ValidationError{}
 
 	// Check required fields.
