@@ -63,7 +63,7 @@ mapfile -t azure_data <<< "$azure_response"
 for backup_blob in "${azure_data[@]}";
 do 
     if [[ -z "$backup_blob" ]]; then
-        echo "Warning: backup name empty"
+        echo "Warning: backup name empty" >&2
         continue
     fi
     backup_date=$(cut -d/ -f2 <<<"$backup_blob")
