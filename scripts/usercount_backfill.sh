@@ -8,23 +8,23 @@ DB_BLOB_DIR="$(mktemp -d "${TMPDIR:-/tmp}/usercount.XXXXXX")" # for testning use
 TIMESTAMP=$(date -u +"%FT%T.%7NZ")
 
 cleanup_backup () {
-    echo "Info: starting cleanup..."
+    echo "Info: removing temporary files..."
     if [[ -n "$backup_file" ]]; then
-        echo "Info: Removing temporary backup file: $backup_file"
+        echo "Info: removing temporary backup file: $backup_file"
         rm -f -- "$backup_file"
         backup_file=""
     fi
-    echo "Info: cleanup complete"
+    echo "Info: removal complete"
 }
 
 cleanup_all () {
-    echo "Info: starting final cleanup..."
+    echo "Info: starting cleanup..."
     cleanup_backup
     if [[ -n "$DB_BLOB_DIR" && -d "$DB_BLOB_DIR" ]]; then
-        echo "Info: Removing temporary backup directory: $DB_BLOB_DIR"
+        echo "Info: removing temporary backup directory: $DB_BLOB_DIR"
         rm -rf -- "$DB_BLOB_DIR"
     fi
-    echo "Info: final cleanup complete"
+    echo "Info: cleanup complete"
 }
 
 skip () {
@@ -86,6 +86,6 @@ do
         skip "unexpected query response ( $query_response )"
         continue
     fi
-    printf "%s,%s,%s,%s\n" "$TIMESTAMP" "Azure blob storage" "$backup_date" "$query_response" >>"$USERCOUNT_LOG"
+    printf "%s,%s,%s,%s\n" "$TIMESTAMP" "usercount_backfill.sh" "$backup_date" "$query_response" >>"$USERCOUNT_LOG"
     cleanup_backup
 done
