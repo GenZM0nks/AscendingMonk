@@ -96,6 +96,20 @@ jobs:
           fi
 
           echo "Automatic release is current."
+          
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.1.0
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install playwright prerequisites
+        run: |
+          npm ci
+          npx playwright install --with-deps
 
       - name: Deploy release to Azure
         env:
@@ -121,3 +135,37 @@ jobs:
             -o BatchMode=yes \
             "monkdeploy@$AZURE_SSH_HOST" \
             "sudo -n /opt/ascendingmonk-deploy/deploy-with-rollback.sh $IMAGE_SHA"
+      
+      - name: Run Playwright
+        id: playwright
+        run: npx playwright test
+        env:
+          BASE_URL: https://ascendingmonk.dk
+          TEST_USERNAME: ${{ secrets.PRODUCTION_TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.PRODUCTION_TEST_PASSWORD }}
+
+      - name: Rollback on Playwright failure(s)
+        if: ${{ failure() && steps.playwright.outcome == 'failure' }}
+        env:
+          AZURE_SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
+          AZURE_SSH_HOST_KEY: ${{ secrets.AZURE_SSH_HOST_KEY }}
+          AZURE_SSH_PRIVATE_KEY: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
+          IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+        run: |
+          set -euo pipefail
+
+          umask 077
+          mkdir -p "$HOME/.ssh"
+
+          trap 'rm -f "$HOME/.ssh/ascendingmonk_deploy"' EXIT
+
+          printf '%s\n' "$AZURE_SSH_PRIVATE_KEY" > "$HOME/.ssh/ascendingmonk_deploy"
+          printf '%s %s\n' "$AZURE_SSH_HOST" "$AZURE_SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+
+          ssh \
+            -i "$HOME/.ssh/ascendingmonk_deploy" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            "monkdeploy@$AZURE_SSH_HOST" \
+            "sudo -n /opt/ascendingmonk-deploy/rollback.sh rollback"

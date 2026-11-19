@@ -5,11 +5,11 @@ services:
       dockerfile: Dockerfile
     image: ascendingmonk:local
     environment:
-      DB_PATH: /data/ascendingmonk.db
+      DB_PATH: ${DB_PATH:-/data/ascendingmonk.db}
       COOKIE_SECURE: "false"
     volumes:
       - type: bind
-        source: ../local_monk_db
+        source: ${DB_HOST_DIR:-../local_monk_db}
         target: /data
     expose:
       - "8080"
