@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 15
 
     env:
-      BASE_URL: http://127.0.0.1:8080
+      BASE_URL: http://127.0.0.1:8081
       TEST_USERNAME: ci-smoke-user
       TEST_EMAIL: ci-smoke-user@example.invalid
       TEST_PASSWORD: aA!4bH_j
@@ -27,21 +27,17 @@ jobs:
           DB_DIR="$(mktemp -d)"
           echo "db_dir=$DB_DIR" >> "$GITHUB_OUTPUT"
           sqlite3 "$DB_DIR/test.db" < schema.sql
+          sqlite3 "$DB_DIR/test.db" "INSERT INTO pages(title, url, language, last_updated, content) VALUES ('Fortran', 'fakelink.com', 'en', '19-11-2026 12:00:00.000000000+00:00', 'Fortran...');"
+          sudo chown -R 10001:10001 "$DB_DIR"
 
       - name: Start application
         env:
           DB_HOST_DIR: ${{ steps.fake-database.outputs.db_dir }}
           DB_PATH: /data/test.db
-        run: docker compose up -d
+        run: docker compose -f compose.dev.yaml up -d
 
       - name: Register fake user
         run: |
-          payload="$(jq -n \
-            --arg username "$TEST_USERNAME" \
-            --arg email "$TEST_EMAIL" \
-            --arg password "$TEST_PASSWORD" \
-            '{username: $username, email: $email, password: $password}')"
-
           ready=false
           for i in {1..30}; do
             if curl --silent --fail "$BASE_URL/" >/dev/null; then
@@ -56,12 +52,13 @@ jobs:
           fi
 
           curl --silent --show-error --fail-with-body \
-            --retry 5 \
-            --retry-delay 1 \
-            --retry-max-time 30 \
-            --request POST "$BASE_URL/register" \
-            --header 'Content-Type: application/json' \
-            --data "$payload"
+          --retry 5 \
+          --retry-delay 1 \
+          --retry-max-time 30 \
+          --request POST "$BASE_URL/api/register" \
+          --data-urlencode "username=$TEST_USERNAME" \
+          --data-urlencode "email=$TEST_EMAIL" \
+          --data-urlencode "password=$TEST_PASSWORD"
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -81,5 +78,5 @@ jobs:
         env:
           DB_DIR: ${{ steps.fake-database.outputs.db_dir }}
         run: |
-          docker compose down --volumes --remove-orphans || true
-          if [ -n "$DB_DIR" ]; then rm -rf -- "$DB_DIR"; fi
+          docker compose -f compose.dev.yaml down --volumes --remove-orphans || true
+          if [ -n "$DB_DIR" ]; then sudo rm -rf -- "$DB_DIR"; fi

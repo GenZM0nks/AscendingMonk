@@ -137,6 +137,7 @@ jobs:
             "sudo -n /opt/ascendingmonk-deploy/deploy-with-rollback.sh $IMAGE_SHA"
       
       - name: Run Playwright
+        id: playwright
         run: npx playwright test
         env:
           BASE_URL: https://ascendingmonk.dk
@@ -144,6 +145,7 @@ jobs:
           TEST_PASSWORD: ${{ secrets.PRODUCTION_TEST_PASSWORD }}
 
       - name: Rollback on Playwright failure(s)
+        if: ${{ failure() && steps.playwright.outcome == 'failure' }}
         env:
           AZURE_SSH_HOST: ${{ secrets.AZURE_SSH_HOST }}
           AZURE_SSH_HOST_KEY: ${{ secrets.AZURE_SSH_HOST_KEY }}
