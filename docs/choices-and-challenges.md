@@ -1478,6 +1478,20 @@ Finally, the technical solution with password validation was kept from warning o
 ### How was this decided?
 Plenary discussion on a draft pull request.
 
+## 06/11/2026
+### Description of choice
+
+We decided we wanted to use hadolint, to get critical feedback on our dockerfile.
+
+### Reason for choice
+
+Our project was growing in size, and we were migrating using docker.At the time we were only linting the go programming language. This meant we were at risk of creating security holes, and exposing vunrabilies that couldbe exploited. 
+
+Containers are only software simualtions with a unique namespace. A security hole in our container configuration could allow a malicous agent, to escape the container and gain access to our database, and its content.
+
+### How was this decided?
+
+The choice was discussed in the group, and suggested by Janus.
 
 ## 09/11/2026
 
