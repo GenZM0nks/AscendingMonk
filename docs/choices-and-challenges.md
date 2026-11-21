@@ -1589,7 +1589,7 @@ It was chosen because it:
 - could run locally and therefore provide early feedbacks
 - had hadolint, which were already were working on implimenting
 
-We also decided to abort the hadolint setup in favor of super-linter, and took the configurations from hadolint into super-linter.
+We also decided to abort the hadolint setup in favor of super-linter, and took the considered configurations from hadolint into super-linter.
 
 ### How was this decided?
 
