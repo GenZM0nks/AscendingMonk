@@ -5,6 +5,11 @@ Azure VM, SQLite, Azure Blob Storage, Azure Managed Identity, Azure CLI
 > Do not copy a restored file over the live database while the
 > application is running.
 
+> This document contains specific names and commands
+> with the purpose of making it quick for all team members to restore backups.
+> The reason for making this choice is the use of Managed Identity and other specifics in the setup
+> that makes it necessary to have access to the virtual machine to use them.
+
 ## 1. Quick recovery: find an Azure backup
 
 SSH into the AscendingMonk VM and run:
@@ -88,16 +93,6 @@ sudo sqlite3 /var/backups/ascendingmonk/restore-test/restored.db \
 
 Check that the expected application tables exist and has rows
 
-``` bash
-sudo sqlite3 /var/backups/ascendingmonk/restore-test/restored.db
-```
-
-```sql
-.tables
-SELECT * from users;
-SELECT * from session_tokens;
-SELECT * from pages;
-```
 
 
 ------------------------------------------------------------------------
