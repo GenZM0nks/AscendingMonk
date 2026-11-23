@@ -1598,7 +1598,7 @@ To get accurate European latency metrics without sacrificing 24/7 downtime alert
 
 A team member noticed that the reported latency (~1,000 ms) looked abnormally high for a European deployment. The team member shared a few tests and calculations with the team.
 The default and unchangable region of the non-subscription Postman Monitor was identified as a likely cause. Another team member looked into ways of using the service without those limits and without loosing the 24/7 monitoring of responses from the web app.
-That resultet in this solution that was decided by the team member but put of for discussion and possibly changes in a pull request review.
+That resulted in this solution that was decided by the team member. It was put up for discussion and possibly changes in a pull request review.
 
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
