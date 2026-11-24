@@ -1491,7 +1491,7 @@ Containers are only software simualtions with a unique namespace. A security hol
 
 ### How was this decided?
 
-The choice was discussed in the group, and suggested by Janus.
+The choice was discussed with the full group in person.
 
 ## 09/11/2026
 
