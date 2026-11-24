@@ -125,7 +125,7 @@ jobs:
               -o StrictHostKeyChecking=yes \
               -o BatchMode=yes \
               "monkdeploy@$AZURE_SSH_HOST" \
-              'sudo -n sh -c "umask 077; cat > /etc/ascendingmonk/prod-secrets.env"'
+              'sudo -n /usr/bin/tee /etc/ascendingmonk/prod-secrets.env >/dev/null'
 
           ssh \
             -i "$HOME/.ssh/ascendingmonk_deploy" \
