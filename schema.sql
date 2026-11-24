@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
   password TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL
+  created_at TIMESTAMP NOT NULL DEFAULT '19-11-2026 11:00:00.000000000+00:00'
 );
 
 -- Create a default user, The password is 'password' (MD5 hashed)

@@ -1,0 +1,27 @@
+{
+  "name": "ascendingmonk",
+  "version": "1.0.0",
+  "description": "A repository to migrate and further develop the legacy project WhoKowsLegacy, and to mantain the website",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "dependencies": {
+    "playwright": "^1.65.1",
+    "playwright-core": "^1.65.1",
+    "undici-types": "^8.9.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github-work:GenZM0nks/AscendingMonk.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

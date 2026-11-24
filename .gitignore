@@ -41,3 +41,11 @@ go.work.sum
 
 # Local Docker image archives
 ascendingmonk-test-image.tar
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
