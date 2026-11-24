@@ -103,6 +103,8 @@ jobs:
           AZURE_SSH_HOST_KEY: ${{ secrets.AZURE_SSH_HOST_KEY }}
           AZURE_SSH_PRIVATE_KEY: ${{ secrets.AZURE_SSH_PRIVATE_KEY }}
           IMAGE_SHA: ${{ steps.release.outputs.image_sha }}
+          PRODUCTION_TEST_USERNAME: ${{ secrets.PRODUCTION_TEST_USERNAME }}
+          PRODUCTION_TEST_PASSWORD: ${{ secrets.PRODUCTION_TEST_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -113,6 +115,17 @@ jobs:
 
           printf '%s\n' "$AZURE_SSH_PRIVATE_KEY" > "$HOME/.ssh/ascendingmonk_deploy"
           printf '%s %s\n' "$AZURE_SSH_HOST" "$AZURE_SSH_HOST_KEY" > "$HOME/.ssh/known_hosts"
+
+          python3 -c 'import os, shlex; print(
+              "export TEST_USERNAME=" + shlex.quote(os.environ["PRODUCTION_TEST_USERNAME"]) + "\n" +
+              "export TEST_PASSWORD=" + shlex.quote(os.environ["PRODUCTION_TEST_PASSWORD"])
+          )' |
+            ssh -i "$HOME/.ssh/ascendingmonk_deploy" \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              -o BatchMode=yes \
+              "monkdeploy@$AZURE_SSH_HOST" \
+              'sudo -n sh -c "umask 077; cat > /etc/ascendingmonk/prod-secrets.env"'
 
           ssh \
             -i "$HOME/.ssh/ascendingmonk_deploy" \
