@@ -12,6 +12,19 @@ if [ "$lint_status" -ne 0 ]; then
     exit "$lint_status"
 fi
 
+superlint_msg=$(./scripts/superlint.sh)
+superlint_status=$?
+
+if [ "$superlint_status" -ne 0 ]; then
+    if [ "$superlint_status" -eq 2 ]; then
+        echo "Super linting failed. push rejected."
+    else
+        echo "Super linting script failed. push rejected."
+    fi
+    echo "$superlint_msg"
+    exit "$superlint_status"
+fi
+
 go test ./test
 test_status=$?
 

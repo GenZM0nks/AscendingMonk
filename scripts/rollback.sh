@@ -3,6 +3,7 @@ set -euo pipefail
 
 LOG_FILE=/var/log/ascendingmonk/deployments.log
 DEPLOY_SCRIPT=/opt/ascendingmonk-deploy/deploy.sh
+RUNNING_RELEASE_CHECK=/opt/ascendingmonk-deploy/running-release.sh
 LOCK_FILE=/run/lock/ascendingmonk-deploy.lock
 SHA_PATTERN='^[0-9a-f]{40}$'
 
@@ -197,6 +198,24 @@ deploy_line() {
 
   echo "Selected deployment:"
   format_deployment "$selected"
+
+  if [[ ! -x "$RUNNING_RELEASE_CHECK" ]]; then
+    error "running-release check is not executable: $RUNNING_RELEASE_CHECK"
+  fi
+
+  set +e
+  "$RUNNING_RELEASE_CHECK" "$sha"
+  local running_status=$?
+  set -e
+
+  if ((running_status == 3)); then
+    error "SHA $sha is already running; DEPLOY_ID $deployment_id was not deployed again."
+  fi
+
+  if ((running_status != 0)); then
+    error "could not determine whether SHA $sha is already running."
+  fi
+
   echo "Deploying SHA $sha."
   run_deploy "$sha"
 }
