@@ -153,6 +153,7 @@ run_deploy() {
 
   if ! (
     cd "$playwright_dir" &&
+    npm ci &&
     BASE_URL="$base_url" npx playwright test
   ); then
     echo "Playwright tests failed - rolling back" >&2
