@@ -127,3 +127,11 @@ jobs:
               -o BatchMode=yes \
               "monkdeploy@$AZURE_SSH_HOST" \
               'sudo -n /usr/bin/tee /etc/ascendingmonk/prod-secrets.env >/dev/null'
+
+            ssh \
+                  -i "$HOME/.ssh/ascendingmonk_deploy" \
+                  -o IdentitiesOnly=yes \
+                  -o StrictHostKeyChecking=yes \
+                  -o BatchMode=yes \
+                  "monkdeploy@$AZURE_SSH_HOST" \
+                  "sudo -n /opt/ascendingmonk-deploy/deploy-with-rollback.sh $IMAGE_SHA"
