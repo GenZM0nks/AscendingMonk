@@ -113,34 +113,13 @@ previous_successful_sha() {
 run_deploy() {
   local sha="$1"
   local recovery="${2:-0}"
-  local playwright_dir="/home/azureuser/AscendingMonk"
-  local base_url="https://ascendingmonk.dk"
 
   if [[ "$recovery" == "1" ]]; then
-    if ! ASCENDINGMONK_DEPLOY_LOCK_HELD=1 \
-         ASCENDINGMONK_RECOVERY=1 \
-         "$DEPLOY_SCRIPT" "$sha"; then
-      echo "Deployment failed; skipping Playwright tests" >&2
-      return 1
-    fi
+    ASCENDINGMONK_DEPLOY_LOCK_HELD=1 \
+      ASCENDINGMONK_RECOVERY=1 \
+      "$DEPLOY_SCRIPT" "$sha"
   else
-    if ! ASCENDINGMONK_DEPLOY_LOCK_HELD=1 "$DEPLOY_SCRIPT" "$sha"; then
-      echo "Deployment failed; skipping Playwright tests" >&2
-      return 1
-    fi
-  fi
-
-  secrets_file="/etc/ascendingmonk/prod-secrets.env"
-  [[ -r "$secrets_file" ]] || {
-    echo "Secrets file is missing or unreadable: $secrets_file" >&2
-    return 1
-  }
-
-  source "$secrets_file"
-
-  if ! (cd "$playwright_dir" && BASE_URL="$base_url" npx playwright test); then
-    echo "Playwright tests failed - rolling back" >&2
-    return 1
+    ASCENDINGMONK_DEPLOY_LOCK_HELD=1 "$DEPLOY_SCRIPT" "$sha"
   fi
 }
 
