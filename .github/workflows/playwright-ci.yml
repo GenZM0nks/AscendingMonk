@@ -64,14 +64,19 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          cache-dependency-path: config/playwright/package-lock.json
 
       - name: Install Playwright
+        working-directory: config/playwright
         run: |
           npm ci
           npx playwright install --with-deps
 
+      - name: Expose dependencies to tests
+        run: ln -s config/playwright/node_modules node_modules
+
       - name: Run Playwright
-        run: npx playwright test
+        run: npx --no-install playwright test --config=config/playwright/playwright.ci.config.ts
 
       - name: Clean up
         if: always()

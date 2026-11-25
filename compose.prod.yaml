@@ -31,3 +31,11 @@ services:
       retries: 3
       start_period: 10s
     restart: unless-stopped
+  
+  # Note that "restart: no" is the default, which is chosen here on purpose,
+  # but left out since it is the default.
+  playwright:
+    image: ghcr.io/genzm0nks/ascendingmonk-playwright:sha-${IMAGE_SHA:?IMAGE_SHA must be set}
+    env_file: /etc/ascendingmonk/prod-secrets.env
+    depends_on:
+      - nginx
