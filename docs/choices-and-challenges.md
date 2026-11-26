@@ -1725,7 +1725,102 @@ The decision to extend logging was made by the team in a discussion about the li
 
 The implementation approach was developed through iterative investigation, implementation and local testing as part of the task of extending our existing search logging functionality.
 
+### Technical approaches and trade-offs
+
 Different technical approaches and their trade-offs were considered throughout development, with decisions being refined based on observed test results.
+
+#### Logging architecture
+
+We considered application-level logging, client-side tracking and reverse proxy logging. NGINX with njs was selected because it allowed us to collect the required information without modifying the application or introducing additional tracking mechanisms.
+
+#### Data completeness and resource consumption
+
+We considered the trade-off between data completeness and resource consumption. Rather than capturing every response without restrictions, we chose selective response capture with a 1 MiB limit and structured JSONL logging.
+
+This allows us to collect relevant search response content while excluding unnecessary data, such as static resources and non-search response bodies.
+
+#### Session reconstruction
+
+For session reconstruction, we tested inactivity thresholds ranging from 1 to 60 minutes against our locally collected interaction data.
+
+We selected 30 minutes as an initial threshold, acknowledging that passive session reconstruction cannot reliably identify individual users.
+
+#### Decisions influenced by testing
+
+Several implementation decisions were directly influenced by local testing:
+
+- Unicode boundary testing revealed a problem with truncated multibyte characters, which was resolved through explicit UTF-8 conversion.
+- Response size comparisons demonstrated the need for more reliable integrity verification using SHA256.
+- Simulated capture failures allowed us to validate our exception handling and verify that response delivery could continue despite an ordinary logging exception.
+- Concurrent request testing allowed us to verify response integrity and request-specific logging under simultaneous requests.
+- Log rotation testing demonstrated that logs could be archived without restarting NGINX and that sessions could be reconstructed across archive boundaries.
+
+#### Disk space and storage considerations
+
+We considered the potential disk space requirements on our virtual machine, as capturing actual search responses generates significantly more data than traditional access logging.
+
+Based on our local test sample, a nonempty search generated approximately 354 KB of log data on average. Using this measurement, we estimated the potential daily storage requirements under different traffic volumes:
+
+- 1,000 searches per day: approximately 354 MB.
+- 5,000 searches per day: approximately 1.77 GB.
+- 10,000 searches per day: approximately 3.54 GB.
+- 50,000 searches per day: approximately 17.71 GB.
+- 100,000 searches per day: approximately 35.41 GB.
+
+These estimates are based on a limited local test sample and should not be considered accurate predictions of actual traffic or storage requirements.
+
+We identified the risk of exhausting the available disk space, which could potentially affect both logging and normal application functionality.
+
+This influenced our decision to exclude unnecessary response content, introduce a response capture limit and regularly transfer archived logs away from the virtual machine.
+
+#### Compression
+
+We compared gzip compression levels 1, 6 and 9. Level 6 was selected because level 9 provided very little additional storage reduction.
+
+Our sampled application logs achieved approximately 64% storage reduction using gzip level 6.
+
+The choice of compression level remains provisional, as compression speed and CPU consumption have not yet been benchmarked on our virtual machine.
+
+#### Manual versus automated log collection
+
+Manual log collection was preferred over automated logging infrastructure due to the limited duration of the simulated traffic period. 
+
+The intended procedure involves:
+
+- Rotating the active interaction log.
+- Compressing the archived log.
+- Downloading the compressed archive to a local machine using SCP.
+- Verifying the integrity of the downloaded archive using SHA256.
+- Removing the verified archives from the virtual machine.
+- Merging historical log data locally for subsequent analysis.
+
+This approach reduces long-term disk space requirements on the virtual machine without introducing additional logging infrastructure.
+
+However, it introduces an operational responsibility for the team. We must monitor available disk space and collect the logs regularly. Unexpected traffic volumes or missed collections could result in insufficient disk space.
+
+An automated log collection and retention solution would be worth considering for a longer-running production system.
+
+In that case we would also store all logging data in a way that they could not be lost if we encounter problems with the virtual machine hosting the web application.
+
+#### Reflections and remaining challenges
+
+These decisions represent compromises between data completeness, implementation complexity, maintainability, resource consumption and operational requirements.
+
+An important reflection is that observability itself consumes system resources. Increasing the amount of collected data can introduce operational risks to the system we are trying to observe.
+
+Although extensive local testing has been completed successfully, several aspects remain subject to validation on our virtual machine:
+
+- CPU and memory consumption under sustained traffic.
+- Actual consumption of available disk space.
+- Actual log growth under simulated user traffic.
+- Compression performance and resource consumption.
+- SCP connectivity and transfer performance.
+- Log rotation under sustained traffic.
+- Establishing a safe log collection frequency.
+
+Not all alternative approaches were implemented and experimentally compared. Some were evaluated conceptually against our requirements, while others were evaluated through practical testing.
+
+Our current choices are therefore based on a combination of technical investigation, observed test results and the specific requirements and constraints of our project.
 
 The implementation has been submitted as a pull request for team review before deployment to our virtual machine.
 
