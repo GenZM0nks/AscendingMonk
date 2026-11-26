@@ -1600,6 +1600,32 @@ A team member noticed that the reported latency (~1,000 ms) looked abnormally hi
 The default and unchangable region of the non-subscription Postman Monitor was identified as a likely cause. Another team member looked into ways of using the service without those limits and without loosing the 24/7 monitoring of responses from the web app.
 That resulted in this solution that was decided by the team member. It was put up for discussion and possibly changes in a pull request review.
 
+## 26/11/2026
+### Description of choice
+We decided to add Playwright end-to-end tests as smoke tests during deployment. We do so to automatically roll back deployments which fail the Playwright tests. We built a new Docker container to run Playwright in production and we run CI Playwright tests in GitHub's Actions runner. The reason for doing both is that the CI tests verify that which we don't require, but do encourage, locally: to run Playwright tests before pushing work. If this isn't done, we know for sure that production Playwright tests will fail on deployment, which is a waste of time. We thus shift left and fail fast instead. Both Playwright runners run the same two tests on three browsers with the largest market share (Firefox, Chromium, WebKit (used in Safari)):
+1. A test to search - This is important since it is the core functionality our users rely on.
+2. A test to login and verify conditional rendering of navigation links - This working fulfills a requirement, but also finds issues with sessions and potentially configuration issues on the VM as discussed in the challenges [entry](https://github.com/GenZM0nks/AscendingMonk/blob/main/docs/choices-and-challenges.md#11112026) with date 11/11/2026. The real solution to this would be not to detach VM state from the repository one, but that is what we have to work with currently.
+
+When brainstorming approaches, a number of design goals were held in mind:
+1. Security in storing production test credentials - This isn't really important currently, since users can't perform destructive actions, but is good practice, and would matter a lot more if we were doing this IRL.
+2. Tests which test for symptoms of configuration issues on the production server.
+3. Having high visibility on test status.
+4. Automatic rollback on failing tests.
+
+The above approach achieved all of these, though 3 to a lesser extent than I would have liked.
+1. Secrets are registered on GitHub. These are passed by the deployment Action to the VM on `/etc/ascendingmonk/prod-secrets.env` and sourced by `deploy-with-rollback.sh` to make the credentials visible to the Playwright container which runs as part of deployment. The secrets file has very restrictive permissions (owner root with rw access and nothing for other users, groups or `other`). There is an exception to this in that there is a permission for sudo with no password for this particular file, for the user `monkdeploy` (the user used for deployment).
+2. This was achieved through the tests in the file placed in `/test/e2e` in the repository. Tests described in the introduction of this section.
+3. Results are visible in GitHub Actions, but not as much as if we had a separate Action for Playwright tests. You currently have to inspect a couple hundred lines of logs in the runner to see test results. However, if they fail, failure of deployment is immediately visible.
+4. Achieved by modifying `deploy.sh` to run the application container and `nginx` separately from Playwright (so that it may fail with an exit code which indicates failure). The existing logic then takes care of automatic rollback on failure.
+
+Finally, this took a number of attempts, and still is not perfect, but it is the result of collaboration, compromises, experimentation and learning. We'd rather have a solution which addresses concerns from all team members. See the challenges entry for the same date as that of this entry.
+
+### Reason for choice
+To implement a version of smoke tests to have further checks on deployment, given the detached state between the repository and the production environment. Also to learn Playwright for end-to-end testing.
+
+### How was this decided?
+The design goals described above were mostly decided on individual discretion, but the approaches to tackling them evolved through discussion and experimentation.
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
