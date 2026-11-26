@@ -1478,6 +1478,20 @@ Finally, the technical solution with password validation was kept from warning o
 ### How was this decided?
 Plenary discussion on a draft pull request.
 
+## 06/11/2026
+### Description of choice
+
+We decided we wanted to use hadolint, to get critical feedback on our dockerfile. A github issue was ceated, to ensure hadolint was setup. (issue number 138)
+
+### Reason for choice
+
+Our project was growing in size, and we were migrating using docker. At the time we were only linting the go programming language. This meant we were at risk of creating security holes, and exposing vunrabilies that couldbe exploited. 
+
+Containers are only software simualtions with a unique namespace. A security hole in our container configuration could allow a malicous agent, to escape the container and gain access to our database, and its content.
+
+### How was this decided?
+
+The choice was discussed with the full group in person.
 
 ## 09/11/2026
 
@@ -1605,6 +1619,30 @@ That resulted in this solution that was decided by the team member. It was put u
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 02/09/2026        | I used search and replace with a naïve regex string (`print ("\w.+")`) to upgrade from Python 2 to 3. This led to repeated work, both in the code and in correcting the commit history in Git.                                                                                         | Max-Emil                          | Verify “finished” work with automated tools such as the Python interpreter, and don’t rely on `make` when it builds in release mode and suppresses error messages. |
 | 09-09-2026        | Due to old habits, I looked in the list view of our GitHub Projects project and missed that Janus was already porting the about page from Python to Go. As such, we did some duplicate work. It was not all bad, since I also worked on abstractions potentially useful in later work. Janus also wrote a nice test which I hadn't done. | Max-Emil                          | Use the Kanban board for getting an overview over tasks which are in progress, reserved by others. Then decide what to work on next.                               |
+
+## 10/11/2026
+
+### Description of choice
+
+We decided to add super-linter to our continuous integration pipeline. We decided to have it run both locally as a pre-commit hook, and as a github action script.
+
+### Reason for choice
+
+Our project size was increasing, and as a result, our SAST's coverage was decreasing dramatically. Super-linter uses many linters, and takes care of most default configurations. 
+
+It was chosen because it:
+- had a complete coverage of the entire project
+- had default configurations for most linters
+- was easy to set up
+- can be configured to run only relevant linters
+- could run locally and therefore provide early feedbacks
+- had hadolint, which were already were working on implimenting
+
+We also decided to abort the hadolint setup in favor of super-linter, and took the considered configurations from hadolint into super-linter.
+
+### How was this decided?
+
+It was decided as a group.
 
 ## 23/09/2026
 ### What happened?
