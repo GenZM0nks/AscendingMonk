@@ -1802,6 +1802,26 @@ An automated log collection and retention solution would be worth considering fo
 
 In that case we would also store all logging data in a way that they could not be lost if we encounter problems with the virtual machine hosting the web application.
 
+#### Production testing and validation
+
+Following deployment to our virtual machine, we validated the implementation under naturally occurring traffic without generating artificial requests or interfering with the simulated user interactions.
+
+The production validation produced the following results:
+
+- All 284 inspected interaction records contained valid JSON, including 61 records containing captured search responses.
+- No response capture errors or truncated responses were observed.
+- The original search logging mechanism remained operational, and historical records were preserved.
+- No sustained CPU or memory pressure, container restarts or out-of-memory terminations were observed.
+- Log rotation was successfully performed without restarting NGINX or interrupting observed logging activity.
+- Gzip level 6 achieved approximately 65% storage reduction, consistent with our local testing.
+- SCP transfer and SHA256 integrity verification were successful, allowing the archived copies to be safely removed from the virtual machine.
+
+Production validation also revealed that the log files were readable by other local users. We therefore restricted the permissions of `interactions.jsonl` and `searches.log` from `644` to `600` and verified that both continued receiving new records. Permissions must also be considered during future rotations and deployments.
+
+Based on the observed log growth and successful validation of the manual collection procedure, we've chosen daily log collection as our initial approach. The collection frequency may be adjusted depending on future traffic volumes and disk space consumption.
+
+The production results supported our existing technical choices, and no further implementation changes were considered necessary at this stage. However, peak-load performance, long-term resource consumption and storage requirements remain uncertain, as the validation was conducted over a limited observation period rather than through controlled production load testing.
+
 #### Reflections and remaining challenges
 
 These decisions represent compromises between data completeness, implementation complexity, maintainability, resource consumption and operational requirements.
