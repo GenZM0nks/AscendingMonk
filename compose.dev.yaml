@@ -1,0 +1,15 @@
+services:
+  ascendingmonk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ascendingmonk:local
+    environment:
+      DB_PATH: ${DB_PATH:-/data/test.db}
+      COOKIE_SECURE: "false"
+    volumes:
+      - type: bind
+        source: ${DB_HOST_DIR:-./data}
+        target: /data
+    ports:
+      - "8081:8080"

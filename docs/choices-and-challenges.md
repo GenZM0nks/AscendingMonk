@@ -1551,6 +1551,55 @@ port = ssh
 ### How was this decided?
 The implementing team member's discretion (Max).
 
+## 23/11/2026
+  
+### Description of choice
+
+Adding OS scheduled request with Postman CLI as a supplement to the already established Postman Monitor.
+
+#### The setup:
+##### Install & Authenticate Postman CLI:
+- Installed via Postman Desktop (Help → Postman CLI and Plugins → Install Postman CLI).
+- Authenticated once using a personal Postman API key (`postman login --with-api-key <PMAK-KEY>`), which caches credentials in the Windows user profile.
+##### Run Command:bash
+`postman collection run <collection-id> -i <folder-or-item-id>`
+
+Note: Using the cloud <collection-id> rather than a local JSON export ensures results upload to the shared Postman Runs tab.
+
+Note: Look at `Avg. Response Time` for pure network + server latency, and `Duration` for total script/collection execution time.
+
+##### Windows Task Scheduler:
+- Program/script: "C:\Users\<Username>\AppData\Local\Microsoft\WindowsApps\postman.exe"
+- Arguments: `collection run <collection-id> -i <folder-or-item-id>`
+- General Settings: Configured with `Run whether user is logged on or not` so it executes silently in the background whenever the machine is awake.
+
+### Reason for choice
+
+To get accurate European latency metrics without sacrificing 24/7 downtime alerts or blowing through our Free tier quota, we split monitoring into two complementary layers:
+
+- On Postman's Free plan, scheduled cloud monitors execute exclusively from AWS us-east-1 (Virginia, USA)
+- Every check had to travel across the Atlantic (DNS, TCP/TLS handshakes, and HTTP round-trips) to our Azure VM in Europe and back, inflating our latency metrics.
+- Manual region selection (e.g., eu-central-1) is locked behind paid Postman plans.
+
+* **Postman Cloud Monitor (24/7 Uptime & Alerting)**
+  * **Where it runs:** Postman Cloud (`US East`)
+  * **Schedule:** Every 1 hour (24/7)
+  * **Quota used:** Monthly Monitor Quota
+  * **Purpose:** Ensures continuous uptime checks and alerts even when all team PCs are turned off.
+
+* **Local Postman CLI (True EU Latency Baseline)**
+  * **Where it runs:** Team Member PC (Denmark)
+  * **Schedule:** Periodic via Windows Task Scheduler. Every 10 mins when laptop is running.
+  * **Quota used:** **0 Monitor Quota** (~2–3 of 10,000 monthly Postman API calls)
+  * **Purpose:** Measures realistic European response times (~100–200 ms) without transatlantic delay.
+
+ 
+### How was this decided?
+
+A team member noticed that the reported latency (~1,000 ms) looked abnormally high for a European deployment. The team member shared a few tests and calculations with the team.
+The default and unchangable region of the non-subscription Postman Monitor was identified as a likely cause. Another team member looked into ways of using the service without those limits and without loosing the 24/7 monitoring of responses from the web app.
+That resulted in this solution that was decided by the team member. It was put up for discussion and possibly changes in a pull request review.
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |

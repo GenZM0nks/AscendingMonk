@@ -3,6 +3,7 @@ set -euo pipefail
 
 DEPLOY_DIR=/opt/ascendingmonk-deploy
 DEPLOY_SCRIPT="$DEPLOY_DIR/deploy.sh"
+RUNNING_RELEASE_CHECK="$DEPLOY_DIR/running-release.sh"
 LOCK_FILE=/run/lock/ascendingmonk-deploy.lock
 DEPLOY_LOG=/var/log/ascendingmonk/deployments.log
 SHA_PATTERN='^[0-9a-f]{40}$'
@@ -52,6 +53,27 @@ require_healthy_log
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   echo "Error: another deployment, rollback, or comment operation is already running." >&2
+  exit 1
+fi
+
+if [[ ! -x "$RUNNING_RELEASE_CHECK" ]]; then
+  echo "Error: running-release check is not executable: $RUNNING_RELEASE_CHECK" >&2
+  exit 1
+fi
+
+set +e
+"$RUNNING_RELEASE_CHECK" "$IMAGE_SHA"
+running_status=$?
+set -e
+
+if ((running_status == 3)); then
+  echo "Error: SHA $IMAGE_SHA is already running." >&2
+  echo "Deployment aborted: no containers or deployment log entries were changed." >&2
+  exit 3
+fi
+
+if ((running_status != 0)); then
+  echo "Error: could not determine whether SHA $IMAGE_SHA is already running." >&2
   exit 1
 fi
 

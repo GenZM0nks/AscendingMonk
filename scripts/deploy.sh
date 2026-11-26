@@ -5,6 +5,7 @@ DEPLOY_DIR=/opt/ascendingmonk-deploy
 COMPOSE_FILE="$DEPLOY_DIR/compose.prod.yaml"
 LOCK_FILE=/run/lock/ascendingmonk-deploy.lock
 DEPLOY_LOG=/var/log/ascendingmonk/deployments.log
+RUNNING_RELEASE_CHECK="$DEPLOY_DIR/running-release.sh"
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: deploy.sh <40-character Git commit SHA>" >&2
@@ -120,6 +121,32 @@ if [[ "${ASCENDINGMONK_RECOVERY:-0}" != "1" ]]; then
   require_healthy_log
 fi
 
+if [[ ! -x "$RUNNING_RELEASE_CHECK" ]]; then
+  echo "Error: running-release check is not executable: $RUNNING_RELEASE_CHECK" >&2
+  exit 1
+fi
+
+set +e
+"$RUNNING_RELEASE_CHECK" "$IMAGE_SHA"
+running_status=$?
+set -e
+
+if ((running_status == 3)); then
+  if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+    echo "Recovery target SHA $IMAGE_SHA is already running; no container change is needed."
+    exit 0
+  fi
+
+  echo "Error: SHA $IMAGE_SHA is already running." >&2
+  echo "Deployment aborted: no containers or deployment log entries were changed." >&2
+  exit 3
+fi
+
+if ((running_status != 0)); then
+  echo "Error: could not determine whether SHA $IMAGE_SHA is already running." >&2
+  exit 1
+fi
+
 echo "Validating release: $IMAGE_SHA"
 
 docker compose \
@@ -141,11 +168,21 @@ fi
 echo "Docker cutover marker found."
 echo "Pulling images for release: $IMAGE_SHA"
 
-docker compose \
-  --project-directory "$DEPLOY_DIR" \
-  --env-file /dev/null \
-  -f "$COMPOSE_FILE" \
-  pull
+if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+  echo "Pulling application images for recovery: $IMAGE_SHA"
+  docker compose \
+    --project-directory "$DEPLOY_DIR" \
+    --env-file /dev/null \
+    -f "$COMPOSE_FILE" \
+    pull ascendingmonk nginx
+else
+  echo "Pulling images for release: $IMAGE_SHA"
+  docker compose \
+    --project-directory "$DEPLOY_DIR" \
+    --env-file /dev/null \
+    -f "$COMPOSE_FILE" \
+    pull
+fi
 
 echo "Images pulled successfully."
 echo "Updating Docker Compose services..."
@@ -154,7 +191,7 @@ docker compose \
   --project-directory "$DEPLOY_DIR" \
   --env-file /dev/null \
   -f "$COMPOSE_FILE" \
-  up -d --no-build --remove-orphans
+  up -d --no-build --remove-orphans ascendingmonk nginx
 
 echo "Docker Compose services updated."
 echo "Checking Docker Compose services..."
@@ -186,6 +223,23 @@ for service in ascendingmonk nginx; do
 
   echo "$service is running."
 done
+
+if [[ "${ASCENDINGMONK_RECOVERY:-0}" == "1" ]]; then
+  echo "Skipping Playwright tests during recovery."
+else
+  if docker compose \
+    --project-directory "$DEPLOY_DIR" \
+    --env-file /dev/null \
+    -f "$COMPOSE_FILE" \
+    up --no-build --exit-code-from playwright playwright
+  then
+    echo "Playwright tests passed."
+  else
+    status=$?
+    echo "Deployment playwright test failed (docker compose exit code: $status)." >&2
+    exit "$status"
+  fi
+fi
 
 echo "Checking deployed image references..."
 

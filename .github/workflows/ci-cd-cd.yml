@@ -95,6 +95,16 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,format=long,prefix=sha-
+      
+      - name: Generate Playwright image metadata
+        id: meta_playwright
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ghcr.io/genzm0nks/ascendingmonk-playwright
+          bake-target: playwright
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long,prefix=sha-
 
       - name: Build and push Docker images
         uses: docker/bake-action@5be5f02ff8819ecd3092ea6b2e6261c31774f2b4 # v6
@@ -105,5 +115,7 @@ jobs:
             cwd://${{ steps.meta_go.outputs.bake-file-annotations }}
             cwd://${{ steps.meta_nginx.outputs.bake-file-tags }}
             cwd://${{ steps.meta_nginx.outputs.bake-file-annotations }}
-          targets: ascendingmonk,nginx
+            cwd://${{ steps.meta_playwright.outputs.bake-file-tags }}
+            cwd://${{ steps.meta_playwright.outputs.bake-file-annotations }}
+          targets: ascendingmonk,nginx,playwright
           push: true
