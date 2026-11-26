@@ -22,7 +22,7 @@ NGINX='ascendingmonk-deploy-nginx-1'
 LOG_DIR=/var/log/nginx
 sudo docker ps
 sudo docker exec "$NGINX" nginx -t
-sudo ls -lhi "$LOG_DIR"
+sudo ls -li "$LOG_DIR"
 df -h "$LOG_DIR"
 ```
 
@@ -64,7 +64,7 @@ If rotation fails, retain both files and investigate before retrying. Do not rep
 **VM:**
 
 ```bash
-sudo ls -lhi "$LOG_DIR"
+sudo ls -li "$LOG_DIR"
 sudo docker top "$NGINX" -eo pid,args
 ```
 
@@ -88,17 +88,24 @@ Look for entries pointing to:
 - `/var/log/nginx/searches.log`
 
 Confirm that the master and all worker processes have both active log files open and that none of them has the timestamped interaction archive open.
+If the file is on the list, then it is open.
 
 **Verify file inodes and permissions**
 
-Compare the file information displayed before and after rotation. An inode identifies a file within its filesystem, even when the file is renamed.
+Display the current log files, including their inode numbers and permissions:
+
+`sudo ls -li "$LOG_DIR"`
+
+The inode is the first number on each line. An inode identifies a file within its filesystem, even when the file is renamed.
+
+Compare the output with the file information displayed before rotation, when the same command was used.
 
 Confirm that:
-
 - The timestamped archive has the original interaction log's inode.
-- The new `interactions.jsonl` has a different inode.
+- The new interactions.jsonl has a different inode.
 - `searches.log` retains its original inode.
-- Both active logs have permissions `600`, displayed as `-rw-------`.
+- Both active logs have permissions 600, displayed as -rw-------.
+- If all four conditions are met, the verification has passed.
 
 **Verify continued logging**
 
@@ -113,7 +120,6 @@ Wait approximately 60 seconds and run the command again.
 
 The interaction log should grow when eligible interactions occur. The original search log only grows when qualifying search requests occur.
 
-If no eligible traffic occurs, wait for additional natural traffic. Do not generate artificial requests.
 
 **Confirm that it is safe to proceed**
 
@@ -150,7 +156,7 @@ Record the filename, both hashes and record count privately. Retain the raw arch
 
 ## 5. Download and verify
 
-**Local — second terminal:** Replace both placeholders using the SSH destination and archive filename from the preceding steps.
+**Local — second terminal:** Replace both placeholders using the SSH destination and archive filename from the preceding steps
 
 ```bash
 VM='YOUR_SSH_DESTINATION'
@@ -197,13 +203,34 @@ If both hashes match the verified local values:
 ```bash
 sudo rm -i -- "$LOG_DIR/$ARCHIVE"
 rm -i -- "$TRANSFER_DIR/$ARCHIVE.gz"
-sudo ls -lhi "$LOG_DIR"
+sudo ls -li "$LOG_DIR"
 df -h "$LOG_DIR"
 ```
 
-Never delete either active log or use wildcard deletion. Confirm both active logs remain and continue logging.
+Never delete either active log or use wildcard deletion. 
+
+Confirm both active logs remain.
+
+`sudo ls -li "$LOG_DIR/interactions.jsonl" "$LOG_DIR/searches.log"`
+
+And check that the logging continues.
+Display the current sizes of both active log files in bytes:
+
+`sudo ls -li "$LOG_DIR/interactions.jsonl" "$LOG_DIR/searches.log"`
+
+Compare the file sizes with those displayed immediately after rotation.
+
+Confirm that:
+- Both active log files still exist.
+- interactions.jsonl has increased in size.
+- searches.log has increased in size.
+- An increase in file size confirms that new data has been written to the respective log file.
+- If either file has not grown, wait for additional qualifying traffic and repeat the command.
+
 
 ## 7. Merge collected logs locally
+
+**Local — second terminal:**
 
 Merge only verified, non-overlapping production archives. Retain the compressed originals and ensure sufficient local disk space.
 
@@ -222,8 +249,7 @@ Merge only verified, non-overlapping production archives. Retain the compressed 
 )
 ```
 
-Validate JSON records, duplicate request IDs and capture flags before analysis. Reconstruct approximate sessions across archive boundaries, not separately per file.
-
 ## Validation and limitations
 
-Rotation, continued logging, gzip level 6 compression, SCP transfer, checksum verification and archive removal were successfully demonstrated on the production VM. Peak-load performance and long-term storage growth remain untested. The pre-creation of the new log with mode `600` in step 2 is a preventive refinement to the tested rotation procedure; verify it on the next collection. The revised command sequence has not been tested end-to-end on all supported operating systems.
+Rotation, continued logging, gzip level 6 compression, SCP transfer, checksum verification and archive removal were successfully demonstrated on the production VM. Peak-load performance and long-term storage growth remain untested.
+ 
