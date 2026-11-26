@@ -1715,10 +1715,6 @@ Testing included:
 
 All final planned local validation checks passed.
 
-However, local testing does not guarantee equivalent performance on our virtual machine. CPU usage, memory consumption, disk capacity, SCP connectivity and log rotation under sustained traffic still need to be evaluated.
-
-We must also consider appropriate access controls and data handling, as the logs contain IP addresses, search inputs, request URLs and response content.
-
 ### How was this decided?
 
 The decision to extend logging was made by the team in a discussion about the limitations of not being able to see in our existing log what the client received on searches.
@@ -1779,8 +1775,6 @@ We compared gzip compression levels 1, 6 and 9. Level 6 was selected because lev
 
 Our sampled application logs achieved approximately 64% storage reduction using gzip level 6.
 
-The choice of compression level remains provisional, as compression speed and CPU consumption have not yet been benchmarked on our virtual machine.
-
 #### Manual versus automated log collection
 
 Manual log collection was preferred over automated logging infrastructure due to the limited duration of the simulated traffic period. 
@@ -1827,16 +1821,6 @@ The production results supported our existing technical choices, and no further 
 These decisions represent compromises between data completeness, implementation complexity, maintainability, resource consumption and operational requirements.
 
 An important reflection is that observability itself consumes system resources. Increasing the amount of collected data can introduce operational risks to the system we are trying to observe.
-
-Although extensive local testing has been completed successfully, several aspects remain subject to validation on our virtual machine:
-
-- CPU and memory consumption under sustained traffic.
-- Actual consumption of available disk space.
-- Actual log growth under simulated user traffic.
-- Compression performance and resource consumption.
-- SCP connectivity and transfer performance.
-- Log rotation under sustained traffic.
-- Establishing a safe log collection frequency.
 
 Not all alternative approaches were implemented and experimentally compared. Some were evaluated conceptually against our requirements, while others were evaluated through practical testing.
 
