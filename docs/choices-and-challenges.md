@@ -1600,6 +1600,236 @@ A team member noticed that the reported latency (~1,000 ms) looked abnormally hi
 The default and unchangable region of the non-subscription Postman Monitor was identified as a likely cause. Another team member looked into ways of using the service without those limits and without loosing the 24/7 monitoring of responses from the web app.
 That resulted in this solution that was decided by the team member. It was put up for discussion and possibly changes in a pull request review.
 
+## 26/11/2026
+
+### Description of choice
+
+We've chosen to extend our existing NGINX logging functionality using the NGINX JavaScript module (njs) to collect more comprehensive data about user interactions and search behaviour during the simulated traffic period.
+
+The existing `searches.log` functionality is preserved, while a new structured log file, `interactions.jsonl`, has been introduced.
+
+We've also chosen to collect, compress and download the logs manually from our virtual machine for subsequent local analysis.
+
+### Reason for choice
+
+Our existing search logging allows us to see what users search for, but does not provide information about the actual search responses or the broader interaction patterns of users.
+
+By extending our logging functionality, we want to investigate:
+
+- What users search for.
+- What search results users receive.
+- Whether searches return any results.
+- Whether users submit empty searches.
+- How users navigate between different pages.
+- How interactions can be grouped into approximate user sessions.
+
+**Choice of NGINX and njs**
+
+We chose to implement the extended logging at the reverse proxy level rather than modifying our Go application.
+
+NGINX already handles incoming requests and outgoing responses, making it a suitable location for collecting this information. The njs module allows us to capture response content that would otherwise not be available through standard NGINX access logging.
+
+The advantages of this approach are:
+
+- Separation of application functionality and analytics logging.
+- No changes to the Go application, database or API contracts.
+- No changes to the website UI.
+- No additional tracking cookies or custom tracking headers.
+- Preservation of our existing search logging functionality.
+
+**Choice of structured logging**
+
+We chose JSONL (JSON Lines) as the format for the new interaction log because each interaction can be represented as an individual JSON object.
+
+This makes the collected data easier to process programmatically, filter, combine and analyse without requiring a separate logging database or analytics service.
+
+**Choice of passive session reconstruction**
+
+As we do not control the simulated user traffic, we chose to reconstruct approximate user sessions using information already available through NGINX:
+
+- IP addresses.
+- User agents.
+- Request timestamps.
+- Referrers.
+- Connection information.
+
+For our initial analysis, we've chosen to group interactions by IP address and user agent and separate sessions after 30 minutes of inactivity.
+
+We acknowledge that this approach cannot reliably identify individual users. Multiple users may share the same IP address and user agent, and a single user's attributes may change.
+
+We also cannot directly observe actions that do not generate HTTP requests, such as closing a browser tab, scrolling, typing without submitting a search or reading a page.
+
+This is a trade-off between collecting useful interaction data and avoiding additional client-side tracking mechanisms.
+
+**Choice of limiting response capture**
+
+Capturing complete search responses can significantly increase storage and memory requirements compared to traditional access logging.
+
+We've therefore chosen to limit captured raw response content to 1 MiB per request and include indicators for truncated responses and response capture errors.
+
+Response bodies are only captured for relevant GET search requests. Other page visits are recorded through metadata, while common static resources are excluded from the new interaction log.
+
+This reduces unnecessary data collection while retaining information relevant to our analysis.
+
+**Technical challenges and reflections**
+
+During development and local testing, we encountered several challenges:
+
+- Truncating a response at a fixed byte limit could split a multibyte UTF-8 character and produce invalid JSONL records. This was addressed by explicitly converting captured response content to UTF-8 text before logging.
+- Response capture needed to avoid interfering with normal application functionality. Exception handling was introduced to record ordinary capture failures while continuing to forward response content to the client.
+- Concurrent requests needed to be tested to verify that captured responses remained associated with their respective requests.
+- Response sizes reported by NGINX did not always match the downloaded response body size because of HTTP transfer framing. We therefore used SHA256 comparisons to verify actual response integrity.
+- Log files needed to be rotated without stopping NGINX or losing historical interaction data.
+
+These challenges demonstrated the importance of testing logging functionality beyond simply verifying that a log file is being generated.
+
+**Choice of manual log collection**
+
+We've chosen manual log collection rather than introducing an automated collection pipeline or a separate logging infrastructure.
+
+The intended approach is to rotate the interaction log, compress the archived file, download it to a local machine and verify its integrity before removing the archived copy from the virtual machine.
+
+Local testing showed that gzip compression could reduce the storage requirements of our sampled application logs by approximately 64%.
+
+We consider manual collection appropriate for the limited duration of our simulated traffic period. However, this approach requires us to monitor available disk space and remember to collect the logs regularly.
+
+An automated collection and retention solution would be worth considering for a longer-running production system.
+
+**Testing and remaining challenges**
+
+Before deploying the changes to our virtual machine, we've chosen to perform extensive testing in an isolated local Docker environment using both a mock upstream server and the actual AscendingMonk application.
+
+Testing included:
+
+- NGINX configuration validation.
+- Actual HTML and JSON search response capture.
+- Response integrity verification using SHA256.
+- Unicode and response truncation boundary testing.
+- Large response handling.
+- Deliberately simulated response capture failures.
+- Concurrent requests.
+- Browser navigation and session reconstruction.
+- Regression testing of existing functionality.
+- Two complete log rotation and collection cycles.
+- Historical log merging and session reconstruction across archive boundaries.
+
+All final planned local validation checks passed.
+
+### How was this decided?
+
+The decision to extend logging was made by the team in a discussion about the limitations of not being able to see in our existing log what the client received on searches.
+
+The implementation approach was developed through iterative investigation, implementation and local testing as part of the task of extending our existing search logging functionality.
+
+### Technical approaches and trade-offs
+
+Different technical approaches and their trade-offs were considered throughout development, with decisions being refined based on observed test results.
+
+#### Logging architecture
+
+We considered application-level logging, client-side tracking and reverse proxy logging. NGINX with njs was selected because it allowed us to collect the required information without modifying the application or introducing additional tracking mechanisms.
+
+#### Data completeness and resource consumption
+
+We considered the trade-off between data completeness and resource consumption. Rather than capturing every response without restrictions, we chose selective response capture with a 1 MiB limit and structured JSONL logging.
+
+This allows us to collect relevant search response content while excluding unnecessary data, such as static resources and non-search response bodies.
+
+#### Session reconstruction
+
+For session reconstruction, we tested inactivity thresholds ranging from 1 to 60 minutes against our locally collected interaction data.
+
+We selected 30 minutes as an initial threshold, acknowledging that passive session reconstruction cannot reliably identify individual users.
+
+#### Decisions influenced by testing
+
+Several implementation decisions were directly influenced by local testing:
+
+- Unicode boundary testing revealed a problem with truncated multibyte characters, which was resolved through explicit UTF-8 conversion.
+- Response size comparisons demonstrated the need for more reliable integrity verification using SHA256.
+- Simulated capture failures allowed us to validate our exception handling and verify that response delivery could continue despite an ordinary logging exception.
+- Concurrent request testing allowed us to verify response integrity and request-specific logging under simultaneous requests.
+- Log rotation testing demonstrated that logs could be archived without restarting NGINX and that sessions could be reconstructed across archive boundaries.
+
+#### Disk space and storage considerations
+
+We considered the potential disk space requirements on our virtual machine, as capturing actual search responses generates significantly more data than traditional access logging.
+
+Based on our local test sample, a nonempty search generated approximately 354 KB of log data on average. Using this measurement, we estimated the potential daily storage requirements under different traffic volumes:
+
+- 1,000 searches per day: approximately 354 MB.
+- 5,000 searches per day: approximately 1.77 GB.
+- 10,000 searches per day: approximately 3.54 GB.
+- 50,000 searches per day: approximately 17.71 GB.
+- 100,000 searches per day: approximately 35.41 GB.
+
+These estimates are based on a limited local test sample and should not be considered accurate predictions of actual traffic or storage requirements.
+
+We identified the risk of exhausting the available disk space, which could potentially affect both logging and normal application functionality.
+
+This influenced our decision to exclude unnecessary response content, introduce a response capture limit and regularly transfer archived logs away from the virtual machine.
+
+#### Compression
+
+We compared gzip compression levels 1, 6 and 9. Level 6 was selected because level 9 provided very little additional storage reduction.
+
+Our sampled application logs achieved approximately 64% storage reduction using gzip level 6.
+
+#### Manual versus automated log collection
+
+Manual log collection was preferred over automated logging infrastructure due to the limited duration of the simulated traffic period. 
+
+The intended procedure involves:
+
+- Rotating the active interaction log.
+- Compressing the archived log.
+- Downloading the compressed archive to a local machine using SCP.
+- Verifying the integrity of the downloaded archive using SHA256.
+- Removing the verified archives from the virtual machine.
+- Merging historical log data locally for subsequent analysis.
+
+This approach reduces long-term disk space requirements on the virtual machine without introducing additional logging infrastructure.
+
+However, it introduces an operational responsibility for the team. We must monitor available disk space and collect the logs regularly. Unexpected traffic volumes or missed collections could result in insufficient disk space.
+
+An automated log collection and retention solution would be worth considering for a longer-running production system.
+
+In that case we would also store all logging data in a way that they could not be lost if we encounter problems with the virtual machine hosting the web application.
+
+#### Production testing and validation
+
+Following deployment to our virtual machine, we validated the implementation under naturally occurring traffic without generating artificial requests or interfering with the simulated user interactions.
+
+The production validation produced the following results:
+
+- All 284 inspected interaction records contained valid JSON, including 61 records containing captured search responses.
+- No response capture errors or truncated responses were observed.
+- The original search logging mechanism remained operational, and historical records were preserved.
+- No sustained CPU or memory pressure, container restarts or out-of-memory terminations were observed.
+- Log rotation was successfully performed without restarting NGINX or interrupting observed logging activity.
+- Gzip level 6 achieved approximately 65% storage reduction, consistent with our local testing.
+- SCP transfer and SHA256 integrity verification were successful, allowing the archived copies to be safely removed from the virtual machine.
+
+Production validation also revealed that the log files were readable by other local users. We therefore restricted the permissions of `interactions.jsonl` and `searches.log` from `644` to `600` and verified that both continued receiving new records. Permissions must also be considered during future rotations and deployments.
+
+Based on the observed log growth and successful validation of the manual collection procedure, we've chosen daily log collection as our initial approach. The collection frequency may be adjusted depending on future traffic volumes and disk space consumption.
+
+The production results supported our existing technical choices, and no further implementation changes were considered necessary at this stage. However, peak-load performance, long-term resource consumption and storage requirements remain uncertain, as the validation was conducted over a limited observation period rather than through controlled production load testing.
+
+#### Reflections and remaining challenges
+
+These decisions represent compromises between data completeness, implementation complexity, maintainability, resource consumption and operational requirements.
+
+An important reflection is that observability itself consumes system resources. Increasing the amount of collected data can introduce operational risks to the system we are trying to observe.
+
+Not all alternative approaches were implemented and experimentally compared. Some were evaluated conceptually against our requirements, while others were evaluated through practical testing.
+
+Our current choices are therefore based on a combination of technical investigation, observed test results and the specific requirements and constraints of our project.
+
+The implementation has been submitted as a pull request for team review before deployment to our virtual machine.
+
+A separate How-To document will describe the operational procedures for collecting and managing the logs.
+
 # Challenges
 | Date (DD/MM/YYYY) | What happened?                                                                                                                                                                                                                                                                         | Who wrote it (and was behind it)? | What did we learn?                                                                                                                                                 |
 | :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
